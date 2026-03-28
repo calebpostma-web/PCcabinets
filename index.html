@@ -1332,7 +1332,7 @@ function processImage(file) {
 // ════════════════════════════════════════════════════════════════════════════
 
 async function callProxy(action, payload) {
-  const res = await fetch('/functions/ai-proxy', {
+  const res = await fetch('/ai-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, payload }),
