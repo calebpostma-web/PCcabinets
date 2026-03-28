@@ -1288,9 +1288,15 @@ function processImage(file) {
     // Show preview
     const preview = document.getElementById('bp-preview');
     const placeholder = document.getElementById('dz-placeholder');
-    preview.src = dataUrl;
-    preview.style.display = 'block';
-    placeholder.style.display = 'none';
+    if (file.type === 'application/pdf') {
+      preview.style.display = 'none';
+      placeholder.innerHTML = '<div class="dz-icon">📋</div><div class="dz-text">' + file.name + '</div><div class="dz-sub">PDF loaded</div>';
+      placeholder.style.display = 'block';
+    } else {
+      preview.src = dataUrl;
+      preview.style.display = 'block';
+      placeholder.style.display = 'none';
+    }
 
     // Scan
     const status = document.getElementById('bp-status');
