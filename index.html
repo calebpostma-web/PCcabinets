@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PC Cabinets">
+<title>PC Cabinets — Install Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Barlow', sans-serif;
+  background: #f0ede8;
+  color: #1a1a1a;
+  min-height: 100vh;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* ── CSS Variables ────────────────────────────────────────────────────────── */
+:root {
+  --bg:        #f0ede8;
+  --surface:   #ffffff;
+  --surface2:  #f7f5f1;
+  --border:    #dedad3;
+  --border2:   #ccc8c0;
+  --text:      #1a1a1a;
+  --muted:     #666560;
+  --faint:     #999590;
+  --accent:    #c75a1e;
+  --accent-bg: #fdf0ea;
+  --accent-dk: #a04515;
+  --green:     #166534;
+  --green-bg:  #f0fdf4;
+  --amber:     #92400e;
+  --amber-bg:  #fffbeb;
+  --blue:      #1e40af;
+  --blue-bg:   #eff6ff;
+  --shadow:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.10), 0 2px 4px rgba(0,0,0,.06);
+  --r:         2px;
+}
+
+/* ── Typography ───────────────────────────────────────────────────────────── */
+h1, h2, h3, .condensed { font-family: 'Barlow Condensed', sans-serif; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+#app-header {
+  background: var(--surface);
+  border-bottom: 2px solid var(--accent);
+  padding: 12px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+#app-header .inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 640px;
+  margin: 0 auto;
+}
+#app-header .logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: .03em;
+  color: var(--text);
+  line-height: 1;
+}
+#app-header .logo span { color: var(--accent); }
+#app-header .tagline {
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-top: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── Nav tabs ─────────────────────────────────────────────────────────────── */
+#nav-tabs {
+  display: flex;
+  gap: 6px;
+}
+.nav-tab {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  border: 1.5px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.nav-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.nav-tab:disabled { opacity: .35; cursor: default; }
+
+/* ── Main layout ──────────────────────────────────────────────────────────── */
+#main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 12px 32px;
+}
+
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+/* ── Form elements ────────────────────────────────────────────────────────── */
+label.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+input[type=text], input[type=number], textarea, select {
+  width: 100%;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px; /* 16px minimum prevents iOS zoom */
+  padding: 11px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--text);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color .15s;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+textarea {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.5;
+  font-size: 15px;
+}
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* ── Difficulty buttons ────────────────────────────────────────────────────── */
+.seg-group { display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.seg-btn {
+  flex: 1;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 11px 8px;
+  border: none;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  border-right: 1px solid var(--border);
+}
+.seg-btn:last-child { border-right: none; }
+.seg-btn.active { background: var(--accent); color: #fff; }
+.seg-hint { font-size: 12px; color: var(--faint); margin-top: 5px; }
+
+/* ── Toggle ────────────────────────────────────────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 8px;
+  gap: 12px;
+  min-height: 56px;
+}
+.toggle-row:last-child { margin-bottom: 0; }
+.toggle-label { font-size: 15px; font-weight: 500; color: var(--text); }
+.toggle-sub { font-size: 12px; color: var(--faint); margin-top: 2px; font-family: 'IBM Plex Mono', monospace; }
+.toggle-info { flex: 1; }
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--border);
+  border-radius: 28px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.toggle-track::before {
+  content: '';
+  position: absolute;
+  height: 20px; width: 20px;
+  left: 4px; bottom: 4px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.toggle-switch input:checked + .toggle-track { background: var(--accent); }
+.toggle-switch input:checked + .toggle-track::before { transform: translateX(22px); }
+
+/* ── Stepper rows (cabinet counts & specialty) ────────────────────────────── */
+.stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 6px;
+  min-height: 52px;
+}
+.stepper-row:last-child { margin-bottom: 0; }
+.stepper-label { font-size: 15px; font-weight: 500; color: var(--text); }
+.stepper-sub { font-size: 11px; color: var(--faint); margin-top: 1px; font-family: 'IBM Plex Mono', monospace; }
+.stepper-info { flex: 1; }
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+.step-btn {
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.step-btn:first-child { border-radius: var(--r) 0 0 var(--r); }
+.step-btn:last-child  { border-radius: 0 var(--r) var(--r) 0; }
+.step-btn:active { background: var(--accent-bg); }
+.step-val {
+  width: 52px;
+  height: 40px;
+  border: none;
+  border-top: 1.5px solid var(--border2);
+  border-bottom: 1.5px solid var(--border2);
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface);
+  -moz-appearance: textfield;
+}
+.step-val::-webkit-outer-spin-button,
+.step-val::-webkit-inner-spin-button { -webkit-appearance: none; }
+.step-val:focus { outline: none; border-color: var(--accent); }
+
+/* Active stepper row highlight */
+.stepper-row.has-value .stepper-label { color: var(--accent); }
+.stepper-row.has-value { border-color: var(--border2); }
+
+/* ── Blueprint upload ─────────────────────────────────────────────────────── */
+#drop-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--r);
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .18s;
+  background: var(--surface2);
+  position: relative;
+}
+#drop-zone.drag-over, #drop-zone:hover { border-color: var(--accent); background: var(--accent-bg); }
+#drop-zone .dz-icon { font-size: 36px; margin-bottom: 8px; }
+#drop-zone .dz-text { font-size: 15px; color: var(--muted); font-weight: 500; }
+#drop-zone .dz-sub { font-size: 12px; color: var(--faint); margin-top: 4px; font-family: 'IBM Plex Mono', monospace; }
+#bp-preview { max-height: 180px; max-width: 100%; border-radius: var(--r); opacity: .9; display: block; margin: 0 auto; }
+#bp-status {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: var(--r);
+  font-size: 13px;
+  font-family: 'IBM Plex Mono', monospace;
+  display: none;
+}
+#bp-status.scanning { background: var(--amber-bg); color: var(--amber); display: block; }
+#bp-status.done     { background: var(--green-bg);  color: var(--green); display: block; }
+#bp-status.error    { background: #fef2f2; color: #b91c1c; display: block; }
+
+/* ── Countertop breakdown preview ─────────────────────────────────────────── */
+#ctr-preview {
+  background: var(--amber-bg);
+  border: 1px solid #fde68a;
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-top: 12px;
+  display: none;
+}
+#ctr-preview.show { display: block; }
+.ctr-line {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  padding: 3px 0;
+  border-bottom: 1px solid #fde68a;
+  color: var(--amber);
+}
+.ctr-line:last-child {
+  border-bottom: none;
+  font-weight: 700;
+  padding-top: 6px;
+  margin-top: 2px;
+  font-size: 14px;
+}
+
+/* ── Calculate button ─────────────────────────────────────────────────────── */
+#calc-btn {
+  width: 100%;
+  padding: 17px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .15s;
+  margin-top: 4px;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: var(--shadow-md);
+}
+#calc-btn:active { background: var(--accent-dk); }
+
+/* ── Document tabs ────────────────────────────────────────────────────────── */
+#doc-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.doc-tab {
+  padding: 13px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  border-radius: var(--r);
+  cursor: pointer;
+  text-align: center;
+  transition: all .15s;
+}
+.doc-tab .dt-icon { font-size: 20px; display: block; margin-bottom: 3px; }
+.doc-tab .dt-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.doc-tab.active {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+.doc-tab.active .dt-label { color: var(--accent); }
+
+/* ── Action buttons row ───────────────────────────────────────────────────── */
+.action-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.action-btn {
+  flex: 1;
+  padding: 12px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--r);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .15s;
+}
+.action-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.action-btn:active { opacity: .8; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   CUSTOMER INVOICE
+══════════════════════════════════════════════════════════════════════════════ */
+#customer-doc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.inv-header {
+  padding: 20px 18px 16px;
+  border-bottom: 2px solid var(--accent);
+}
+.inv-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--accent);
+  line-height: 1;
+}
+.inv-sub {
+  font-size: 12px;
+  color: var(--faint);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 4px;
+}
+.inv-meta {
+  text-align: right;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+.inv-meta .inv-num { font-size: 14px; font-weight: 500; color: var(--text); }
+.inv-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.inv-section {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.inv-section:last-child { border-bottom: none; }
+.inv-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.inv-client-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+.inv-client-addr {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.inv-scope-box {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-bg);
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #444;
+  border-radius: 0 var(--r) var(--r) 0;
+}
+.inv-scope-loading {
+  color: var(--faint);
+  font-style: italic;
+  font-size: 14px;
+}
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+}
+.price-row:last-of-type { border-bottom: none; }
+.price-row .pr-label { color: var(--muted); }
+.price-row .pr-val { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+.price-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14px 0 6px;
+  border-top: 2px solid var(--accent);
+  margin-top: 8px;
+}
+.price-total-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: .04em;
+}
+.price-total-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+.inv-note {
+  font-size: 12px;
+  color: var(--faint);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.terms-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.terms-box strong { color: var(--accent); }
+.inv-footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--faint);
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   INSTALLER WORK ORDER
+══════════════════════════════════════════════════════════════════════════════ */
+#workorder-doc {
+  background: #1a1a1a;
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.wo-header {
+  background: #111;
+  padding: 18px 16px;
+  border-bottom: 2px solid var(--accent);
+}
+.wo-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.wo-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.wo-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: var(--r);
+  letter-spacing: .04em;
+}
+.badge-green  { background: rgba(22,101,52,.25);  color: #4ade80; border: 1px solid rgba(22,101,52,.4); }
+.badge-amber  { background: rgba(180,83,9,.25);   color: #fb923c; border: 1px solid rgba(180,83,9,.4); }
+.badge-blue   { background: rgba(30,64,175,.25);  color: #93c5fd; border: 1px solid rgba(30,64,175,.4); }
+.badge-red    { background: rgba(153,27,27,.25);  color: #f87171; border: 1px solid rgba(153,27,27,.4); }
+.wo-client {
+  font-size: 13px;
+  color: #777;
+  margin-top: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.wo-meta { display: flex; justify-content: space-between; align-items: flex-start; }
+.wo-num  { font-size: 12px; color: #555; font-family: 'IBM Plex Mono', monospace; text-align: right; }
+.wo-num span { display: block; color: #aaa; font-size: 13px; }
+
+/* Pill tags */
+.wo-pills { padding: 12px 16px; border-bottom: 1px solid #2a2a2a; display: flex; flex-wrap: wrap; gap: 5px; }
+.wo-pill {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 3px 9px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: var(--r);
+  color: #aaa;
+}
+.wo-pill.accent { border-color: var(--accent); color: var(--accent); }
+.wo-pill.blue   { border-color: rgba(30,64,175,.5); color: #93c5fd; }
+
+/* Work order sections */
+.wo-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid #222;
+}
+.wo-section:last-child { border-bottom: none; }
+.wo-section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+  border-bottom: 1px solid #2a2a2a;
+  padding-bottom: 5px;
+}
+
+/* Labour table */
+.wo-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.wo-table th {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 5px 6px;
+  border-bottom: 1px solid #2a2a2a;
+  text-align: left;
+  background: #111;
+}
+.wo-table th.r { text-align: right; }
+.wo-table td {
+  padding: 7px 6px;
+  border-bottom: 1px solid #1e1e1e;
+  color: #999;
+  vertical-align: top;
+}
+.wo-table td.v  { color: #ddd; font-weight: 500; text-align: right; font-family: 'IBM Plex Mono', monospace; }
+.wo-table td.o  { color: var(--accent); font-weight: 600; text-align: right; font-family: 'IBM Plex Mono', monospace; }
+.wo-table td.n  { font-size: 11px; color: #555; font-style: italic; }
+.wo-table tr:last-child td { border-bottom: none; }
+
+/* Totals box */
+.wo-totals {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+.wo-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid #222;
+  font-size: 13px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.wo-total-row:last-child { border-bottom: none; }
+.wo-total-row .wtr-label { color: #666; }
+.wo-total-row .wtr-val   { color: #ccc; font-weight: 500; }
+.wo-grand {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 0 2px;
+  border-top: 1px solid var(--accent);
+  margin-top: 8px;
+}
+.wo-grand-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.wo-grand-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Countertop breakdown */
+.ctr-breakdown {
+  background: rgba(146,64,14,.12);
+  border: 1px solid rgba(146,64,14,.3);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+.ctr-breakdown-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #c47c0a;
+  margin-bottom: 8px;
+}
+.ctr-bd-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(146,64,14,.2);
+  color: #9a7040;
+}
+.ctr-bd-row:last-child { border-bottom: none; color: #c47c0a; font-weight: 700; font-size: 13px; padding-top: 6px; }
+
+/* Rationale block */
+.wo-rationale {
+  border-left: 3px solid var(--accent);
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.75;
+  color: #666;
+  border-radius: 0 var(--r) var(--r) 0;
+  background: #111;
+}
+.wo-rationale strong { color: #aaa; }
+.wo-rationale em { color: #444; display: block; margin-top: 6px; }
+
+/* Site notes */
+.wo-notes {
+  border-left: 3px solid #c47c0a;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #c8a060;
+  white-space: pre-wrap;
+  border-radius: 0 var(--r) var(--r) 0;
+  background: rgba(18,15,0,.8);
+}
+.wo-internal {
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: #2a2a2a;
+  padding: 12px;
+  text-transform: uppercase;
+}
+
+/* ── Print ────────────────────────────────────────────────────────────────── */
+@media print {
+  body { background: white; }
+  #app-header, #nav-tabs, #doc-tabs, .action-row, .no-print { display: none !important; }
+  #main { padding: 0; max-width: 100%; }
+  .card { box-shadow: none; border: 1px solid #ddd; }
+  #customer-doc { box-shadow: none; }
+  #workorder-doc { background: #1a1a1a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1a1a1a;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--r);
+  font-size: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  z-index: 9999;
+  transition: transform .25s;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ── Header ───────────────────────────────────────────────────────────────── -->
+<header id="app-header">
+  <div class="inner">
+    <div>
+      <div class="logo">PC <span>Cabinets</span></div>
+      <div class="tagline">Install Estimator</div>
+    </div>
+    <div id="nav-tabs">
+      <button class="nav-tab active" id="tab-estimate" onclick="showView('estimate')">Estimate</button>
+      <button class="nav-tab" id="tab-docs" onclick="showView('docs')" disabled>Documents</button>
+    </div>
+  </div>
+</header>
+
+<!-- ── Toast ────────────────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     ESTIMATE VIEW
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="view-estimate">
+<div id="main">
+
+  <!-- Blueprint -->
+  <div class="card">
+    <div class="card-title">📐 Blueprint Scan</div>
+    <div id="drop-zone" onclick="document.getElementById('bp-file').click()"
+         ondrop="handleDrop(event)" ondragover="event.preventDefault(); this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')">
+      <div id="dz-placeholder">
+        <div class="dz-icon">📄</div>
+        <div class="dz-text">Tap to upload blueprint</div>
+        <div class="dz-sub">Photo or screenshot — AI counts cabinets</div>
+      </div>
+      <img id="bp-preview" style="display:none">
+    </div>
+    <input type="file" id="bp-file" accept="image/*" capture="environment" style="display:none" onchange="handleFileSelect(this)">
+    <div id="bp-status"></div>
+  </div>
+
+  <!-- Project Settings -->
+  <div class="card">
+    <div class="card-title">⚙ Project Settings</div>
+
+    <div class="field">
+      <label class="field-label">Difficulty</label>
+      <div class="seg-group">
+        <button class="seg-btn" id="diff-simple"   onclick="setDifficulty('simple')">Simple</button>
+        <button class="seg-btn active" id="diff-standard" onclick="setDifficulty('standard')">Standard</button>
+        <button class="seg-btn" id="diff-complex"  onclick="setDifficulty('complex')">Complex</button>
+      </div>
+      <div class="seg-hint" id="diff-hint">Typical residential kitchen</div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">Hourly Rate ($)</label>
+        <input type="number" id="hourly-rate" value="75" min="20" max="500" oninput="updateCtrPreview()">
+      </div>
+      <div class="field">
+        <label class="field-label">Project Ref</label>
+        <input type="text" id="project-ref" placeholder="e.g. NB-2026-01">
+      </div>
+    </div>
+
+    <div class="toggle-row" style="margin-top:4px; margin-bottom:0">
+      <div class="toggle-info">
+        <div class="toggle-label">Installer Delivers Cabinets</div>
+        <div class="toggle-sub">+2.5 hrs — load, transport, unload</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-delivery">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Cabinet Counts -->
+  <div class="card">
+    <div class="card-title">🗄 Cabinet Counts</div>
+    <div id="cab-steppers">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- Specialty Add-ons -->
+  <div class="card">
+    <div class="card-title">✦ Specialty Add-ons</div>
+    <div id="specialty-steppers">
+      <!-- populated by JS -->
+    </div>
+    <div class="toggle-row" style="margin-top:8px; margin-bottom:0">
+      <div class="toggle-info">
+        <div class="toggle-label">Light Valance / Soffit Panel</div>
+        <div class="toggle-sub">+3.0 hrs</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-soffit">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Countertop -->
+  <div class="card">
+    <div class="card-title">🪨 Countertop Supply & Install</div>
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <div class="toggle-label">Include Countertop in Quote</div>
+        <div class="toggle-sub">Supplier cost + markup + install labour</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-ctr" onchange="toggleCountertop()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <div id="ctr-fields" style="display:none; margin-top:10px">
+      <div class="field-row" style="margin-bottom:10px">
+        <div class="field">
+          <label class="field-label">Supplier Quote ($)</label>
+          <input type="number" id="ctr-cost" placeholder="e.g. 2400" min="0" oninput="updateCtrPreview()">
+        </div>
+        <div class="field">
+          <label class="field-label">Your Markup (%)</label>
+          <input type="number" id="ctr-markup" value="15" min="0" max="100" oninput="updateCtrPreview()">
+        </div>
+      </div>
+      <div id="ctr-preview">
+        <div class="ctr-line"><span>Supplier cost</span><span id="cp-supplier">—</span></div>
+        <div class="ctr-line"><span>Markup</span><span id="cp-markup">—</span></div>
+        <div class="ctr-line"><span>Install labour</span><span id="cp-labour">—</span></div>
+        <div class="ctr-line"><span>Subtotal</span><span id="cp-total">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Details -->
+  <div class="card">
+    <div class="card-title">👤 Client Details</div>
+    <div class="field">
+      <label class="field-label">Client Name</label>
+      <input type="text" id="client-name" placeholder="e.g. Chris Wegrzyn">
+    </div>
+    <div class="field">
+      <label class="field-label">Site Address</label>
+      <input type="text" id="client-addr" placeholder="e.g. Ridgetown, ON">
+    </div>
+    <div class="field">
+      <label class="field-label">Payment Terms</label>
+      <input type="text" id="payment-terms" value="50% deposit required. Balance due on completion.">
+    </div>
+  </div>
+
+  <!-- Installer Notes -->
+  <div class="card">
+    <div class="card-title">📋 Installer Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--faint)">— work order only</span></div>
+    <textarea id="installer-notes" placeholder="e.g. Existing bulkhead — do not remove. Confirm cold air return size before anchoring island. Magic corner mechanism before scribing toekick..."></textarea>
+  </div>
+
+  <!-- Calculate -->
+  <button id="calc-btn" onclick="calculate()">CALCULATE &amp; GENERATE DOCUMENTS →</button>
+
+</div><!-- #main -->
+</div><!-- #view-estimate -->
+
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     DOCUMENTS VIEW
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="view-docs" style="display:none">
+<div id="main">
+
+  <!-- Doc switcher -->
+  <div id="doc-tabs">
+    <div class="doc-tab active" id="dt-customer" onclick="showDoc('customer')">
+      <span class="dt-icon">📄</span>
+      <span class="dt-label">Customer Invoice</span>
+    </div>
+    <div class="doc-tab" id="dt-workorder" onclick="showDoc('workorder')">
+      <span class="dt-icon">🔧</span>
+      <span class="dt-label">Work Order</span>
+    </div>
+  </div>
+
+  <!-- Action row -->
+  <div class="action-row no-print">
+    <button class="action-btn" onclick="showView('estimate')">← Back</button>
+    <button class="action-btn primary" onclick="window.print()">🖨 Print / PDF</button>
+  </div>
+
+  <!-- Customer Invoice -->
+  <div id="customer-doc">
+    <div class="inv-section" style="padding-bottom:0; border-bottom:none">
+      <div class="inv-top-row">
+        <div>
+          <div class="inv-title">INSTALLATION QUOTE</div>
+          <div class="inv-sub">Cabinet Installation — Labour &amp; Consumables</div>
+        </div>
+        <div class="inv-meta">
+          <div class="inv-num" id="inv-num"></div>
+          <div id="inv-date"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inv-section" style="padding-top:14px">
+      <div class="inv-header" style="background:none; border:none; padding:0">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+          <div>
+            <div class="inv-section-label">Prepared for</div>
+            <div class="inv-client-name" id="inv-client-name">—</div>
+            <div class="inv-client-addr" id="inv-client-addr"></div>
+            <div class="inv-client-addr" id="inv-project-ref"></div>
+          </div>
+          <div>
+            <div class="inv-section-label">Type of work</div>
+            <div style="font-weight:600; font-size:15px" id="inv-type">New Installation</div>
+            <div id="inv-delivery-note" style="font-size:13px; color:var(--muted); font-family:'IBM Plex Mono',monospace; margin-top:3px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inv-section">
+      <div class="inv-section-label">Scope of work</div>
+      <div id="inv-scope" class="inv-scope-box inv-scope-loading">Writing description…</div>
+    </div>
+
+    <div class="inv-section">
+      <div class="inv-section-label">Pricing</div>
+      <div class="price-row"><span class="pr-label">Labour</span><span class="pr-val" id="inv-labour">—</span></div>
+      <div class="price-row"><span class="pr-label">Consumables (screws, adhesive, blades &amp; sundries)</span><span class="pr-val" id="inv-consumables">—</span></div>
+      <div class="price-row" id="inv-ctr-row" style="display:none"><span class="pr-label">Countertop supply &amp; installation</span><span class="pr-val" id="inv-ctr">—</span></div>
+      <div class="price-total-row">
+        <div class="price-total-label">TOTAL (excl. HST)</div>
+        <div class="price-total-val" id="inv-total">—</div>
+      </div>
+      <div class="inv-note" id="inv-note-text"></div>
+    </div>
+
+    <div class="inv-section">
+      <div class="terms-box">
+        <strong>Payment Terms</strong><br>
+        <span id="inv-terms"></span>
+      </div>
+    </div>
+
+    <div class="inv-footer" id="inv-footer">
+      PC Cabinets · Chatham, ON · Quote valid 30 days from date of issue
+    </div>
+  </div><!-- #customer-doc -->
+
+  <!-- Work Order -->
+  <div id="workorder-doc" style="display:none; margin-top:0">
+    <div class="wo-header">
+      <div class="wo-meta">
+        <div>
+          <div class="wo-title">INSTALLER WORK ORDER</div>
+          <div class="wo-badges" id="wo-badges"></div>
+          <div class="wo-client" id="wo-client"></div>
+        </div>
+        <div class="wo-num">
+          <span id="wo-num"></span>
+          <div id="wo-date" style="margin-top:3px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wo-pills" id="wo-pills"></div>
+
+    <div class="wo-section">
+      <div class="wo-section-title">Labour Breakdown</div>
+      <table class="wo-table">
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th class="r">Hrs ea.</th>
+            <th class="r">Qty</th>
+            <th class="r">Total hrs</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="wo-tbody"></tbody>
+      </table>
+      <div class="wo-totals" id="wo-totals"></div>
+      <div class="ctr-breakdown" id="wo-ctr-breakdown" style="display:none"></div>
+    </div>
+
+    <div class="wo-section">
+      <div class="wo-section-title">Estimating Rationale</div>
+      <div class="wo-rationale" id="wo-rationale"></div>
+    </div>
+
+    <div class="wo-section" id="wo-notes-section" style="display:none">
+      <div class="wo-section-title">Site Notes &amp; Flags</div>
+      <div class="wo-notes" id="wo-notes-content"></div>
+    </div>
+
+    <div class="wo-internal">Internal document — not for client distribution</div>
+  </div><!-- #workorder-doc -->
+
+</div><!-- #main -->
+</div><!-- #view-docs -->
+
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════════════════════════
+
+const RATES = {
+  setup: 2.0, lower_std: 0.55, upper_std: 0.50,
+  corner_mult: 1.6, tall_mult: 2.0,
+  sink_extra: 0.5, island_extra: 2.0,
+  crown_lf: 0.05, crown_cut: 0.08,
+  toekick: 0.35, hardware: 0.08,
+  cleanup: 0.75, delivery: 2.5,
+  float_shelf: 0.5, light_ch: 0.12,
+  pullout: 0.75, scribe: 0.5, soffit: 3.0,
+  ctr_install: 2.0,
+  cons_base: 95, cons_per_cab: 3.5,
+};
+
+const CAB_FIELDS = [
+  { id: 'f-lowers',   label: 'Lower (Base) Cabinets',      sub: '0.55 hrs each' },
+  { id: 'f-uppers',   label: 'Upper (Wall) Cabinets',       sub: '0.50 hrs each' },
+  { id: 'f-corners',  label: 'Corner / Lazy-Susan Units',   sub: '0.88 hrs each' },
+  { id: 'f-tall',     label: 'Tall / Pantry Units',         sub: '1.10 hrs each' },
+  { id: 'f-sink',     label: 'Sink Base(s)',                sub: '1.05 hrs each' },
+  { id: 'f-islands',  label: 'Island / Peninsula Unit(s)',  sub: '4.20+ hrs each' },
+  { id: 'f-crown-lf', label: 'Crown Moulding (linear ft)',  sub: '0.05 hrs/ft' },
+  { id: 'f-crown-cut',label: 'Crown Mitre Cuts',            sub: '0.08 hrs each' },
+  { id: 'f-toekick',  label: 'Toe Kick Runs',               sub: '0.35 hrs each' },
+  { id: 'f-hardware', label: 'Hardware Holes',              sub: '0.08 hrs each' },
+];
+
+const SPEC_FIELDS = [
+  { id: 'f-shelves',  label: 'Floating Shelves',                    sub: '+0.5 hrs each' },
+  { id: 'f-lighting', label: 'Lighting Channel (linear ft)',        sub: '+0.12 hrs/ft' },
+  { id: 'f-pullout',  label: 'Pull-out / Magic Corner Units',       sub: '+0.75 hrs each' },
+  { id: 'f-scribe',   label: 'Filler Scribing Runs',                sub: '+0.5 hrs each' },
+];
+
+// ════════════════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildSteppers('cab-steppers', CAB_FIELDS);
+  buildSteppers('specialty-steppers', SPEC_FIELDS);
+  // Default toekick to 1
+  const tk = document.getElementById('f-toekick');
+  if (tk) { tk.value = 1; updateStepperHighlight(tk); }
+  // Default sink to 1
+  const sk = document.getElementById('f-sink');
+  if (sk) { sk.value = 1; updateStepperHighlight(sk); }
+});
+
+function buildSteppers(containerId, fields) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = fields.map(f => `
+    <div class="stepper-row" id="row-${f.id}">
+      <div class="stepper-info">
+        <div class="stepper-label">${f.label}</div>
+        <div class="stepper-sub">${f.sub}</div>
+      </div>
+      <div class="stepper">
+        <button class="step-btn" ontouchstart="" onclick="stepChange('${f.id}', -1)">−</button>
+        <input class="step-val" type="number" id="${f.id}" value="0" min="0"
+               oninput="updateStepperHighlight(this)" onchange="updateStepperHighlight(this)">
+        <button class="step-btn" ontouchstart="" onclick="stepChange('${f.id}', 1)">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function stepChange(id, delta) {
+  const inp = document.getElementById(id);
+  const newVal = Math.max(0, (parseInt(inp.value) || 0) + delta);
+  inp.value = newVal;
+  updateStepperHighlight(inp);
+  if (id === 'ctr-cost' || id === 'ctr-markup') updateCtrPreview();
+}
+
+function updateStepperHighlight(inp) {
+  const row = document.getElementById('row-' + inp.id);
+  if (row) {
+    if (parseInt(inp.value) > 0) row.classList.add('has-value');
+    else row.classList.remove('has-value');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// DIFFICULTY
+// ════════════════════════════════════════════════════════════════════════════
+
+let currentDifficulty = 'standard';
+
+function setDifficulty(d) {
+  currentDifficulty = d;
+  ['simple','standard','complex'].forEach(x => {
+    document.getElementById('diff-' + x).classList.toggle('active', x === d);
+  });
+  const hints = {
+    simple:   'Flat walls, flat floor, easy access',
+    standard: 'Typical residential kitchen',
+    complex:  'Uneven walls/floors, extra scribing required',
+  };
+  document.getElementById('diff-hint').textContent = hints[d];
+  updateCtrPreview();
+}
+
+function getDiffMult() {
+  return currentDifficulty === 'simple' ? 0.8 : currentDifficulty === 'complex' ? 1.25 : 1.0;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// COUNTERTOP TOGGLE & PREVIEW
+// ════════════════════════════════════════════════════════════════════════════
+
+function toggleCountertop() {
+  const on = document.getElementById('toggle-ctr').checked;
+  document.getElementById('ctr-fields').style.display = on ? 'block' : 'none';
+  updateCtrPreview();
+}
+
+function updateCtrPreview() {
+  const on       = document.getElementById('toggle-ctr').checked;
+  const cost     = parseFloat(document.getElementById('ctr-cost')?.value) || 0;
+  const markupPct= parseFloat(document.getElementById('ctr-markup')?.value) || 0;
+  const rate     = parseFloat(document.getElementById('hourly-rate').value) || 75;
+  const diff     = getDiffMult();
+
+  if (!on || cost <= 0) {
+    document.getElementById('ctr-preview')?.classList.remove('show');
+    return;
+  }
+
+  const markup     = cost * markupPct / 100;
+  const labourHrs  = RATES.ctr_install * diff;
+  const labourCost = labourHrs * rate;
+  const total      = cost + markup + labourCost;
+
+  document.getElementById('cp-supplier').textContent = '$' + cost.toFixed(2);
+  document.getElementById('cp-markup').textContent   = '$' + markup.toFixed(2) + ' (' + markupPct + '%)';
+  document.getElementById('cp-labour').textContent   = '$' + labourCost.toFixed(2) + ' (' + labourHrs.toFixed(1) + ' hrs)';
+  document.getElementById('cp-total').textContent    = '$' + total.toFixed(2);
+  document.getElementById('ctr-preview').classList.add('show');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// BLUEPRINT UPLOAD & AI SCAN
+// ════════════════════════════════════════════════════════════════════════════
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer?.files?.[0];
+  if (file && file.type.startsWith('image/')) processImage(file);
+}
+
+function handleFileSelect(input) {
+  const file = input.files?.[0];
+  if (file) processImage(file);
+}
+
+function processImage(file) {
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUrl = e.target.result;
+    // Show preview
+    const preview = document.getElementById('bp-preview');
+    const placeholder = document.getElementById('dz-placeholder');
+    preview.src = dataUrl;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+
+    // Scan
+    const status = document.getElementById('bp-status');
+    status.className = 'scanning';
+    status.textContent = '⏳ Scanning blueprint…';
+
+    try {
+      const base64 = dataUrl.split(',')[1];
+      const mediaType = file.type || 'image/jpeg';
+      const result = await callProxy('scanBlueprint', { imageBase64: base64, mediaType });
+
+      // Fill in fields
+      const fieldMap = {
+        lowers: 'f-lowers', uppers: 'f-uppers', corners: 'f-corners',
+        tallUnits: 'f-tall', sinkBases: 'f-sink', islands: 'f-islands',
+        crownLF: 'f-crown-lf', crownCuts: 'f-crown-cut',
+        toekickRuns: 'f-toekick', hardwareCount: 'f-hardware',
+      };
+      let filled = 0;
+      Object.entries(fieldMap).forEach(([key, id]) => {
+        if (result[key] !== undefined && result[key] !== null) {
+          const inp = document.getElementById(id);
+          if (inp) { inp.value = result[key]; updateStepperHighlight(inp); filled++; }
+        }
+      });
+
+      status.className = 'done';
+      status.textContent = '✓ ' + (result.notes || `Filled ${filled} fields from blueprint`);
+    } catch (err) {
+      status.className = 'error';
+      status.textContent = '✗ Scan failed — enter counts manually. (' + err.message + ')';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// PROXY CALLS
+// ════════════════════════════════════════════════════════════════════════════
+
+async function callProxy(action, payload) {
+  const res = await fetch('/functions/ai-proxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, payload }),
+  });
+  if (!res.ok) throw new Error('Proxy returned ' + res.status);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+async function generateScope(form, est) {
+  const parts = [];
+  if (form.lowers > 0)      parts.push(form.lowers + ' lower base cabinet' + (form.lowers > 1 ? 's' : ''));
+  if (form.uppers > 0)      parts.push(form.uppers + ' upper wall cabinet' + (form.uppers > 1 ? 's' : ''));
+  if (form.corners > 0)     parts.push(form.corners + ' corner unit' + (form.corners > 1 ? 's' : ''));
+  if (form.tall > 0)        parts.push(form.tall + ' tall or pantry unit' + (form.tall > 1 ? 's' : ''));
+  if (form.sink > 0)        parts.push(form.sink + ' sink base' + (form.sink > 1 ? 's' : ''));
+  if (form.islands > 0)     parts.push(form.islands + ' island unit' + (form.islands > 1 ? 's' : ''));
+  if (form.crownLF > 0)     parts.push('crown moulding (' + form.crownLF + ' linear ft)');
+  if (form.toekick > 0)     parts.push('toe kick finishing');
+  if (form.hardware > 0)    parts.push('hardware installation (' + form.hardware + ' holes)');
+  if (form.delivery)        parts.push('cabinet delivery to site');
+  if (form.shelves > 0)     parts.push(form.shelves + ' floating shelf' + (form.shelves > 1 ? 'ves' : ''));
+  if (form.lighting > 0)    parts.push('under-cabinet lighting channel');
+  if (form.pullout > 0)     parts.push('pull-out and corner hardware fitting');
+  if (form.soffit)          parts.push('light valance or soffit panel work');
+  if (form.ctrInstall)      parts.push('countertop supply and installation');
+
+  const prompt = `Write a professional 2–3 sentence scope-of-work description for a CUSTOMER installation quote.
+Plain English only — no bullet points, no jargon, no mention of hours or rates.
+Sound like a skilled contractor explaining the job to a homeowner.
+Key elements: ${parts.join(', ')}.
+${currentDifficulty === 'complex' ? 'Note that the site requires additional precision due to site conditions.' : ''}
+End with one sentence stating that all cabinetry materials are supplied by the client or sourced by the installer as noted, and the quote covers labour and installer consumables.`;
+
+  const result = await callProxy('generateScope', { prompt });
+  return result.text || '';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// PRICING ENGINE
+// ════════════════════════════════════════════════════════════════════════════
+
+function getFormValues() {
+  const g = id => parseInt(document.getElementById(id)?.value) || 0;
+  const f = id => parseFloat(document.getElementById(id)?.value) || 0;
+  const b = id => document.getElementById(id)?.checked || false;
+  const s = id => document.getElementById(id)?.value?.trim() || '';
+
+  return {
+    lowers:    g('f-lowers'),
+    uppers:    g('f-uppers'),
+    corners:   g('f-corners'),
+    tall:      g('f-tall'),
+    sink:      g('f-sink'),
+    islands:   g('f-islands'),
+    crownLF:   g('f-crown-lf'),
+    crownCuts: g('f-crown-cut'),
+    toekick:   g('f-toekick'),
+    hardware:  g('f-hardware'),
+    shelves:   g('f-shelves'),
+    lighting:  g('f-lighting'),
+    pullout:   g('f-pullout'),
+    scribe:    g('f-scribe'),
+    soffit:    b('toggle-soffit'),
+    delivery:  b('toggle-delivery'),
+    ctrInstall:b('toggle-ctr'),
+    ctrCost:   f('ctr-cost'),
+    ctrMarkup: f('ctr-markup'),
+    rate:      f('hourly-rate') || 75,
+    difficulty: currentDifficulty,
+    clientName: s('client-name'),
+    clientAddr: s('client-addr'),
+    projectRef: s('project-ref'),
+    paymentTerms: s('payment-terms'),
+    installerNotes: s('installer-notes'),
+  };
+}
+
+function buildEstimate(form) {
+  const diff = getDiffMult();
+  const lines = [];
+  let totalHrs = 0;
+
+  const add = (label, hrs, qty, note, fixed) => {
+    const total = parseFloat((hrs * qty * (fixed ? 1 : diff)).toFixed(2));
+    lines.push({ label, hrs: parseFloat(hrs.toFixed(2)), qty, total, note });
+    totalHrs += total;
+    return total;
+  };
+
+  // Setup
+  lines.push({ label: 'Mobilisation & Setup', hrs: 2.0, qty: 1, total: 2.0, note: 'Tools in, site survey, layout check' });
+  totalHrs += 2.0;
+
+  // Delivery (fixed — not diff adjusted)
+  if (form.delivery) add('Cabinet Delivery to Site', RATES.delivery, 1, 'Load, transport, unload & stage on site', true);
+
+  // Core install
+  if (form.lowers > 0)  add('Lower (Base) Cabinets',      RATES.lower_std,                     form.lowers,   'Level, shim, secure to wall studs');
+  if (form.uppers > 0)  add('Upper (Wall) Cabinets',       RATES.upper_std,                     form.uppers,   'Locate studs, temporary rail, hang & plumb');
+  if (form.corners > 0) add('Corner / Lazy-Susan Units',   RATES.lower_std * RATES.corner_mult, form.corners,  'Complex alignment, mechanism fit, rotation check');
+  if (form.tall > 0)    add('Tall / Pantry Units',         RATES.lower_std * RATES.tall_mult,   form.tall,     'Heavy lift, ceiling-height scribing');
+  if (form.sink > 0)    add('Sink Base(s)',                RATES.lower_std + RATES.sink_extra,  form.sink,     'Cutout, drain/supply clearance');
+  if (form.islands > 0) add('Island Unit(s)',              RATES.lower_std * 4 + RATES.island_extra, form.islands, 'Position, level, anchor, scribe all four sides');
+  if (form.crownLF > 0) add('Crown Moulding',             RATES.crown_lf,                      form.crownLF,  'Measure, cope, nail, fill');
+  if (form.crownCuts>0) add('Crown Mitre Cuts',           RATES.crown_cut,                     form.crownCuts,'Compound mitre, corners & returns');
+  if (form.toekick > 0) add('Toe Kick Runs',              RATES.toekick,                       form.toekick,  'Scribe, cut, clip');
+  if (form.hardware > 0)add('Hardware (Knobs / Pulls)',   RATES.hardware,                      form.hardware, 'Jig, drill, fit per hole');
+
+  // Specialty
+  if (form.shelves > 0) add('Floating Shelves',           RATES.float_shelf,  form.shelves, 'Locate studs/anchors, level, bracket fit per shelf');
+  if (form.lighting > 0)add('Under-Cabinet Lighting Channel', RATES.light_ch, form.lighting,'Rout/fit channel, run wiring, clip profile');
+  if (form.pullout > 0) add('Pull-out / Magic Corner Hardware', RATES.pullout,form.pullout, 'Fit mechanism, adjust travel, align doors');
+  if (form.scribe > 0)  add('Filler Scribing (Uneven Walls)', RATES.scribe,  form.scribe,  'Measure, scribe, plane/cut, fit filler strip');
+  if (form.soffit)      add('Light Valance / Soffit Panel', RATES.soffit,    1,             'Frame, measure, fit panel around bulkhead or soffit');
+
+  // Cleanup
+  lines.push({ label: 'Clean-up & Punch-list', hrs: 0.75, qty: 1, total: 0.75, note: 'Door/drawer adjustment, debris removal, final wipe-down' });
+  totalHrs += 0.75;
+
+  // Countertop
+  let ctr = { labourHrs: 0, supplierCost: 0, markup: 0, labourCost: 0, total: 0 };
+  if (form.ctrInstall && form.ctrCost > 0) {
+    ctr.supplierCost = form.ctrCost;
+    ctr.markup       = parseFloat((form.ctrCost * form.ctrMarkup / 100).toFixed(2));
+    ctr.labourHrs    = parseFloat((RATES.ctr_install * diff).toFixed(2));
+    ctr.labourCost   = parseFloat((ctr.labourHrs * form.rate).toFixed(2));
+    ctr.total        = parseFloat((ctr.supplierCost + ctr.markup + ctr.labourCost).toFixed(2));
+  }
+
+  const totalCabs     = form.lowers + form.uppers + form.corners + form.tall + form.sink + form.islands;
+  const consumables   = parseFloat((RATES.cons_base + RATES.cons_per_cab * totalCabs).toFixed(2));
+  const labourCost    = parseFloat((totalHrs * form.rate).toFixed(2));
+  const cabTotal      = parseFloat((labourCost + consumables).toFixed(2));
+  const grandTotal    = parseFloat((cabTotal + ctr.total).toFixed(2));
+
+  return {
+    lines,
+    totalHrs:    parseFloat(totalHrs.toFixed(2)),
+    labourCost,
+    consumables,
+    cabTotal,
+    ctr,
+    grandTotal,
+    totalCabs,
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// CALCULATE & RENDER
+// ════════════════════════════════════════════════════════════════════════════
+
+let currentEstimate = null;
+let currentForm     = null;
+let invoiceNum      = '';
+
+async function calculate() {
+  const form = getFormValues();
+  const est  = buildEstimate(form);
+  currentEstimate = est;
+  currentForm     = form;
+
+  const now = new Date();
+  invoiceNum = 'KCI-' + Date.now().toString().slice(-6);
+  const dateStr = now.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: '2-digit' });
+
+  // Populate customer invoice
+  document.getElementById('inv-num').textContent  = '#' + invoiceNum;
+  document.getElementById('inv-date').textContent = dateStr;
+  document.getElementById('inv-client-name').textContent = form.clientName || '—';
+  document.getElementById('inv-client-addr').textContent = form.clientAddr || '';
+  document.getElementById('inv-project-ref').textContent = form.projectRef ? 'Ref: ' + form.projectRef : '';
+  document.getElementById('inv-type').textContent = 'New Cabinet Installation';
+  document.getElementById('inv-delivery-note').textContent = form.delivery ? 'Includes delivery to site' : '';
+  document.getElementById('inv-labour').textContent      = '$' + est.labourCost.toFixed(2);
+  document.getElementById('inv-consumables').textContent = '$' + est.consumables.toFixed(2);
+  document.getElementById('inv-terms').textContent       = form.paymentTerms;
+
+  if (est.ctr.total > 0) {
+    document.getElementById('inv-ctr-row').style.display = 'flex';
+    document.getElementById('inv-ctr').textContent = '$' + est.ctr.total.toFixed(2);
+  } else {
+    document.getElementById('inv-ctr-row').style.display = 'none';
+  }
+
+  document.getElementById('inv-total').textContent = '$' + est.grandTotal.toFixed(2);
+  document.getElementById('inv-note-text').textContent =
+    'All cabinetry and hardware supplied by client / North & Brown.' +
+    (est.ctr.total > 0 ? ' Countertop sourced and supplied by installer.' : '') +
+    ' This quote covers labour and installer consumables only.';
+
+  // Scope — loading state, then async
+  const scopeEl = document.getElementById('inv-scope');
+  scopeEl.className = 'inv-scope-box inv-scope-loading';
+  scopeEl.textContent = 'Writing description…';
+
+  // Work order
+  renderWorkOrder(form, est, invoiceNum, dateStr);
+
+  // Switch view
+  showView('docs');
+  showDoc('customer');
+
+  // Generate scope in background
+  try {
+    const scope = await generateScope(form, est);
+    scopeEl.className = 'inv-scope-box';
+    scopeEl.textContent = scope || 'Full kitchen cabinet installation as per drawings, including all specified cabinetry, mouldings, hardware and finishing.';
+  } catch {
+    scopeEl.className = 'inv-scope-box';
+    scopeEl.textContent = 'Full kitchen cabinet installation as per drawings, including all specified cabinetry, mouldings, hardware and finishing. All cabinetry and materials are supplied by the client. This quote covers labour and installer consumables only.';
+  }
+}
+
+function renderWorkOrder(form, est, num, dateStr) {
+  const diffLabel = form.difficulty === 'simple' ? 'Simple (0.8×)' :
+                    form.difficulty === 'complex' ? 'Complex (1.25×)' : 'Standard (1.0×)';
+
+  // Header
+  document.getElementById('wo-num').textContent  = '#' + num;
+  document.getElementById('wo-date').textContent = dateStr;
+  document.getElementById('wo-client').textContent =
+    (form.clientName || 'Client TBD') + ' · ' +
+    (form.clientAddr || 'Address TBD') +
+    (form.projectRef ? ' · Ref: ' + form.projectRef : '');
+
+  // Badges
+  const badgesEl = document.getElementById('wo-badges');
+  badgesEl.innerHTML =
+    '<span class="wo-badge badge-green">NEW INSTALL</span>' +
+    `<span class="wo-badge ${form.difficulty === 'complex' ? 'badge-red' : 'badge-blue'}">${diffLabel}</span>`;
+
+  // Pills
+  const pillsEl = document.getElementById('wo-pills');
+  const pills = [];
+  if (form.lowers > 0)   pills.push(form.lowers + ' lowers');
+  if (form.uppers > 0)   pills.push(form.uppers + ' uppers');
+  if (form.corners > 0)  pills.push(form.corners + ' corners');
+  if (form.tall > 0)     pills.push(form.tall + ' tall');
+  if (form.sink > 0)     pills.push(form.sink + ' sink');
+  if (form.islands > 0)  pills.push(form.islands + ' island');
+  if (form.shelves > 0)  pills.push(form.shelves + ' shelves');
+  if (form.lighting > 0) pills.push(form.lighting + 'ft lighting');
+  if (form.pullout > 0)  pills.push(form.pullout + ' pull-outs');
+  if (form.scribe > 0)   pills.push(form.scribe + ' scribe');
+  if (form.soffit)       pills.push('valance');
+  if (form.delivery)     pills.push('<span class="wo-pill blue">delivery</span>');
+  if (form.ctrInstall)   pills.push('countertop');
+
+  pillsEl.innerHTML =
+    pills.map(p => p.startsWith('<') ? p : `<span class="wo-pill">${p}</span>`).join('') +
+    `<span class="wo-pill accent">${est.totalCabs} units · ${est.totalHrs.toFixed(1)} hrs</span>`;
+
+  // Labour table
+  const tbody = document.getElementById('wo-tbody');
+  tbody.innerHTML = est.lines.map(line => `
+    <tr>
+      <td>${line.label}</td>
+      <td class="v">${line.hrs > 0 ? line.hrs.toFixed(2) : '—'}</td>
+      <td class="v">${line.qty > 0 ? '×' + line.qty : '—'}</td>
+      <td class="o">${line.total > 0 ? line.total.toFixed(2) : '—'}</td>
+      <td class="n">${line.note}</td>
+    </tr>
+  `).join('');
+
+  // Totals
+  const totalsEl = document.getElementById('wo-totals');
+  const totalRows = [
+    ['Total cabinet install hours', est.totalHrs.toFixed(2) + ' hrs'],
+    [`Labour (${est.totalHrs.toFixed(2)} hrs × $${form.rate}/hr)`, '$' + est.labourCost.toFixed(2)],
+    ['Consumables (screws, adhesive, blades, sundries)', '$' + est.consumables.toFixed(2)],
+  ];
+  if (est.ctr.total > 0) totalRows.push(['Countertop (supplier + markup + install)', '$' + est.ctr.total.toFixed(2)]);
+
+  totalsEl.innerHTML =
+    totalRows.map(([k, v]) => `
+      <div class="wo-total-row">
+        <span class="wtr-label">${k}</span>
+        <span class="wtr-val">${v}</span>
+      </div>
+    `).join('') +
+    `<div class="wo-grand">
+      <span class="wo-grand-label">TOTAL (excl. HST)</span>
+      <span class="wo-grand-val">$${est.grandTotal.toFixed(2)}</span>
+    </div>`;
+
+  // Countertop breakdown
+  const ctrBd = document.getElementById('wo-ctr-breakdown');
+  if (est.ctr.total > 0) {
+    ctrBd.style.display = 'block';
+    ctrBd.innerHTML = `
+      <div class="ctr-breakdown-title">Countertop Breakdown</div>
+      <div class="ctr-bd-row"><span>Supplier cost</span><span>$${est.ctr.supplierCost.toFixed(2)}</span></div>
+      <div class="ctr-bd-row"><span>Markup (${form.ctrMarkup}%)</span><span>$${est.ctr.markup.toFixed(2)}</span></div>
+      <div class="ctr-bd-row"><span>Install labour (${est.ctr.labourHrs.toFixed(1)} hrs × $${form.rate}/hr)</span><span>$${est.ctr.labourCost.toFixed(2)}</span></div>
+      <div class="ctr-bd-row"><span>Countertop subtotal</span><span>$${est.ctr.total.toFixed(2)}</span></div>
+    `;
+  } else {
+    ctrBd.style.display = 'none';
+  }
+
+  // Rationale
+  document.getElementById('wo-rationale').innerHTML = `
+    Unit rates: lowers <strong>0.55 hrs</strong> · uppers <strong>0.50 hrs</strong> ·
+    tall/pantry <strong>1.10 hrs</strong> (2×) · corner/lazy-susan <strong>0.88 hrs</strong> (1.6×) ·
+    sink bases +0.50 hrs · islands +2.0 hrs base.
+    Difficulty: <strong>${diffLabel}</strong>.
+    Add-ons: delivery 2.5 hrs (fixed, not diff-adjusted) · floating shelf 0.5 hrs each ·
+    lighting channel 0.12 hrs/ft · pull-out hardware 0.75 hrs each ·
+    filler scribing 0.5 hrs/run · valance/soffit 3.0 hrs.
+    Crown: 0.05 hrs/LF + 0.08 hrs/cut · Toe kick: 0.35 hrs/run · Hardware: 0.08 hrs/hole.
+    Consumables: $${RATES.cons_base} base + $${RATES.cons_per_cab}/cabinet.
+    Includes 2.0 hrs mobilisation + 0.75 hrs clean-up.
+    ${est.ctr.total > 0 ? `Countertop: supplier cost + ${form.ctrMarkup}% markup + ${est.ctr.labourHrs.toFixed(1)} hrs install.` : ''}
+    <em>Rates based on JLC trade data and North &amp; Brown install records.</em>
+  `;
+
+  // Installer notes
+  const notesSection = document.getElementById('wo-notes-section');
+  const notesContent = document.getElementById('wo-notes-content');
+  if (form.installerNotes) {
+    notesSection.style.display = 'block';
+    notesContent.textContent = form.installerNotes;
+  } else {
+    notesSection.style.display = 'none';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// VIEW MANAGEMENT
+// ════════════════════════════════════════════════════════════════════════════
+
+function showView(v) {
+  document.getElementById('view-estimate').style.display = v === 'estimate' ? 'block' : 'none';
+  document.getElementById('view-docs').style.display     = v === 'docs'     ? 'block' : 'none';
+  document.getElementById('tab-estimate').classList.toggle('active', v === 'estimate');
+  document.getElementById('tab-docs').classList.toggle('active', v === 'docs');
+  if (currentEstimate) document.getElementById('tab-docs').disabled = false;
+  window.scrollTo(0, 0);
+}
+
+function showDoc(d) {
+  document.getElementById('customer-doc').style.display  = d === 'customer'  ? 'block' : 'none';
+  document.getElementById('workorder-doc').style.display = d === 'workorder' ? 'block' : 'none';
+  document.getElementById('dt-customer').classList.toggle('active', d === 'customer');
+  document.getElementById('dt-workorder').classList.toggle('active', d === 'workorder');
+  window.scrollTo(0, 0);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════════════════════
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
