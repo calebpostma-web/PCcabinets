@@ -5,15 +5,7 @@
 // Handles two actions:
 //   scanBlueprint  — image (base64) → cabinet counts JSON
 //   generateScope  — job details → customer scope description (text)
-export async function onRequestOptions() {
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
-}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -63,8 +55,10 @@ export async function onRequestPost(context) {
         role: 'user',
         content: [
           {
-            type: 'image',
-            source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: imageBase64 },
+            ...(mediaType === 'application/pdf'
+              ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: imageBase64 } }
+              : { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: imageBase64 } }
+            ),
           },
           {
             type: 'text',
