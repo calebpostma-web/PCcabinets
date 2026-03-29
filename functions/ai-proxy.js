@@ -3,20 +3,18 @@
 // Cloudflare env var required: ANTHROPIC_API_KEY
 //
 // Handles two actions:
-//   scanBlueprint  — image (base64) → cabinet counts JSON
+//   scanBlueprint  — image/PDF (base64) → cabinet counts + install details JSON
 //   generateScope  — job details → customer scope description (text)
 
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  // CORS headers so the front-end can call this from any origin during dev
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
-  // Preflight
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -42,117 +40,141 @@ export async function onRequestPost(context) {
   const { action, payload } = body;
 
   // ── scanBlueprint ───────────────────────────────────────────────────────────
-  // payload: { imageBase64: string, mediaType: string }
-  // returns: { lowers, uppers, corners, tallUnits, sinkBases, islands,
-  //            crownLF, crownCuts, toekickRuns, hardwareCount, notes }
   if (action === 'scanBlueprint') {
     const { imageBase64, mediaType } = payload;
 
-    const anthropicBody = {
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            ...(mediaType === 'application/pdf'
-              ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: imageBase64 } }
-              : { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: imageBase64 } }
-            ),
-          },
-          {
-            type: 'text',
-            text: `You are an expert cabinet installer reading a professional kitchen/bathroom cabinet shop drawing from North & Brown (Chatham, ON).
+    const scanPrompt = `You are an expert cabinet installer reading professional kitchen/bathroom cabinet shop drawings.
 
-Study ALL visible pages carefully — floor plan, elevations, and any parts schedule/bill of materials.
+Study ALL visible pages carefully — floor plans, elevations, parts schedules, and any detail callouts.
 
-Count every individual numbered cabinet unit. Be precise.
+Count every individual numbered cabinet unit. Be precise and thorough.
 
-Return ONLY a raw JSON object — no markdown, no backticks, no explanation:
+IMPORTANT — also look for these specific details:
+• CROWN MOULDING: Look for "crown", "CMK", "CM", or moulding callouts at the top of upper cabinets. If uppers exist, crown is very common — estimate linear feet by summing the widths of all upper cabinet runs. Also count mitre cuts (inside corners, outside corners, returns).
+• UNDER-COUNTER LIGHTING: Look for "LED", "UC light", "puck light", "lighting channel", light switch callouts, or electrical notes near upper/lower cabinets. Note if any lighting is specified.
+• BASEBOARDS: Look for "baseboard", "base trim", "BB" near floor level, especially where cabinets meet adjacent walls/rooms. Count transition pieces where baseboard meets cabinet toe kicks.
+• ROOM TYPE: Identify what room this is — kitchen, bathroom, laundry, mudroom, butler's pantry, bar, etc.
+
+Return ONLY a raw JSON object (no markdown, no backticks, no explanation):
 {
+  "client": "<client/project name from title block if visible>",
+  "roomType": "<kitchen|bathroom|laundry|mudroom|bar|butler_pantry|other>",
+  "layout": "<L-shape|U-shape|galley|island|linear|other>",
   "lowers": <integer — standard base/lower cabinets at counter height>,
   "uppers": <integer — wall-mounted upper/wall cabinets>,
   "corners": <integer — corner units, blind corners, lazy susans, magic corners>,
   "tallUnits": <integer — pantry towers, tall cabinets 84"+ height>,
   "sinkBases": <integer — sink base cabinets>,
   "islands": <integer — island or peninsula groups, count as 1 even if multiple boxes>,
-  "crownLF": <integer — estimated linear feet of crown or flat-board moulding if specified>,
-  "crownCuts": <integer — estimated number of mitre cuts for crown>,
+  "crownLF": <integer — estimated linear feet of crown moulding. If uppers exist and crown is not explicitly excluded, estimate from upper cabinet run widths>,
+  "crownCuts": <integer — estimated mitre cuts for crown (corners + returns). Minimum 2 for end returns>,
+  "crownDetected": <boolean — true if crown/moulding is explicitly shown or noted on the drawing>,
   "toekickRuns": <integer — number of toe kick runs>,
-  "hardwareCount": <integer — total pull or knob holes if inferable>,
-  "notes": "<one sentence: layout shape e.g. L-shape with island, and any notable site conditions>"
-}`,
+  "hardwareCount": <integer — total pull or knob holes if inferable from specs or door/drawer count>,
+  "hasUCLighting": <boolean — true if under-counter or under-cabinet lighting is noted on the drawing>,
+  "ucLightingLF": <integer — estimated linear feet of lighting channel if detectable, else 0>,
+  "baseboardPieces": <integer — number of baseboard transition pieces where cabinets meet adjacent walls>,
+  "difficulty": "<simple|standard|complex — based on wall conditions, ceiling notes, corner complexity>",
+  "retrofit": <boolean — true if replacing existing cabinets, false if new construction>,
+  "notes": "<key installation notes: special conditions, unusual features, room shape, anything affecting time>"
+}`;
+
+    const anthropicBody = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1200,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: mediaType === 'application/pdf' ? 'document' : 'image',
+            source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: imageBase64 },
           },
+          { type: 'text', text: scanPrompt },
         ],
       }],
     };
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(anthropicBody),
-    });
+    try {
+      const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify(anthropicBody),
+      });
 
-    if (!response.ok) {
-      const err = await response.text();
-      return new Response(JSON.stringify({ error: `Anthropic error: ${err}` }), {
-        status: 502,
+      if (!apiRes.ok) {
+        const errText = await apiRes.text();
+        return new Response(JSON.stringify({ error: 'Anthropic API error: ' + apiRes.status, detail: errText }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      const data = await apiRes.json();
+      const raw = data.content?.[0]?.text || '{}';
+      const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(clean);
+
+      return new Response(JSON.stringify(parsed), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Scan failed: ' + err.message }), {
+        status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
-
-    const data = await response.json();
-    const raw = data.content?.find(b => b.type === 'text')?.text || '{}';
-    const clean = raw.replace(/```json|```/g, '').trim();
-
-    return new Response(clean, {
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    });
   }
 
   // ── generateScope ───────────────────────────────────────────────────────────
-  // payload: { prompt: string }
-  // returns plain text scope description
   if (action === 'generateScope') {
     const { prompt } = payload;
 
     const anthropicBody = {
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 300,
+      max_tokens: 400,
       messages: [{ role: 'user', content: prompt }],
     };
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(anthropicBody),
-    });
+    try {
+      const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify(anthropicBody),
+      });
 
-    if (!response.ok) {
-      const err = await response.text();
-      return new Response(JSON.stringify({ error: `Anthropic error: ${err}` }), {
-        status: 502,
+      if (!apiRes.ok) {
+        const errText = await apiRes.text();
+        return new Response(JSON.stringify({ error: 'Anthropic API error: ' + apiRes.status, detail: errText }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      const data = await apiRes.json();
+      const text = data.content?.[0]?.text || '';
+
+      return new Response(JSON.stringify({ text }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (err) {
+      return new Response(JSON.stringify({ error: 'Scope generation failed: ' + err.message }), {
+        status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
-
-    const data = await response.json();
-    const text = data.content?.find(b => b.type === 'text')?.text?.trim() || '';
-
-    return new Response(JSON.stringify({ text }), {
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    });
   }
 
-  return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
+  return new Response(JSON.stringify({ error: 'Unknown action: ' + action }), {
     status: 400,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });
