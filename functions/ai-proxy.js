@@ -53,7 +53,7 @@ IMPORTANT — also look for these specific details:
 • CROWN MOULDING: Look for "crown", "CMK", "CM", or moulding callouts at the top of upper cabinets. If uppers exist, crown is very common — estimate linear feet by summing the widths of all upper cabinet runs. Also count mitre cuts (inside corners, outside corners, returns).
 • UNDER-COUNTER LIGHTING: Look for "LED", "UC light", "puck light", "lighting channel", light switch callouts, or electrical notes near upper/lower cabinets. Note if any lighting is specified.
 • BASEBOARDS: Look for "baseboard", "base trim", "BB" near floor level, especially where cabinets meet adjacent walls/rooms. Count transition pieces where baseboard meets cabinet toe kicks.
-• BACKSPLASH: Look for "backsplash", "BS", "tile", "subway tile", "mosaic", or tile callouts between the countertop and upper cabinets. Note the type if specified (subway, mosaic, slab, etc.) and estimate the square footage if dimensions are visible.
+• BACKSPLASH: Look for "backsplash", "BS", "tile", "subway tile", "mosaic", or tile callouts between the countertop and upper cabinets. Note the type if specified (subway, mosaic, slab, etc.). IMPORTANT: Even if backsplash square footage is not explicitly labelled, ESTIMATE it by calculating the total linear length of countertop runs (sum the widths of all base cabinets in inches, convert to feet) multiplied by the backsplash height (typically 18 inches / 1.5 feet between countertop and upper cabinets, unless a different height is shown). Subtract window openings if visible. Return the result in square feet.
 • ROOM TYPE: Identify what room this is — kitchen, bathroom, laundry, mudroom, butler's pantry, bar, etc.
 
 Return ONLY a raw JSON object (no markdown, no backticks, no explanation):
@@ -77,7 +77,7 @@ Return ONLY a raw JSON object (no markdown, no backticks, no explanation):
   "baseboardPieces": <integer — number of baseboard transition pieces where cabinets meet adjacent walls>,
   "hasBacksplash": <boolean — true if backsplash is noted or called out on the drawing>,
   "backsplashType": "<subway|mosaic|slab|tile|unknown|none — type if detectable>",
-  "backsplashSqFt": <integer — estimated square footage of backsplash area if detectable, else 0>,
+  "backsplashSqFt": <integer — estimated square footage of backsplash area. Calculate from countertop run length × backsplash height (default 1.5 ft) minus window openings. Always estimate if base cabinets are present, even if backsplash is not explicitly called out>,
   "difficulty": "<simple|standard|complex — based on wall conditions, ceiling notes, corner complexity>",
   "notes": "<key installation notes: special conditions, unusual features, room shape, anything affecting time>"
 }`;
