@@ -958,6 +958,94 @@ textarea {
   font-family: 'IBM Plex Mono', monospace;
 }
 
+/* ── Room tabs ─────────────────────────────────────────────────────────────── */
+.room-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.room-tab {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.room-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.room-tab .room-count { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: .7; margin-left: 4px; }
+.room-add-btn {
+  width: 34px;
+  height: 34px;
+  border: 1.5px dashed var(--border2);
+  background: transparent;
+  color: var(--accent);
+  font-size: 20px;
+  border-radius: var(--r);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+}
+.room-add-btn:hover { border-color: var(--accent); background: var(--accent-bg); }
+.room-remove-btn {
+  font-size: 10px;
+  margin-left: 6px;
+  opacity: .5;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.room-remove-btn:hover { opacity: 1; color: #b91c1c; }
+
+/* ── Manufacturer notes ───────────────────────────────────────────────────── */
+.mfg-notes-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mfg-notes-row input { flex: 1; }
+.mfg-notes-btn {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.mfg-notes-btn:hover { border-color: var(--accent); color: var(--accent); }
+.mfg-notes-btn.has-notes { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.mfg-notes-area {
+  margin-top: 8px;
+  display: none;
+}
+.mfg-notes-area.open { display: block; }
+.mfg-notes-area textarea {
+  min-height: 60px;
+  font-size: 13px;
+}
+.mfg-notes-saved {
+  font-size: 11px;
+  color: var(--green);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 4px;
+  display: none;
+}
+
 /* ── Print ────────────────────────────────────────────────────────────────── */
 @media print {
   body { background: white; }
@@ -1132,15 +1220,21 @@ textarea {
     </div>
   </div>
 
+  <!-- Room Tabs -->
+  <div class="card" id="room-card">
+    <div class="card-title">🏠 Rooms</div>
+    <div class="room-tabs" id="room-tabs"></div>
+  </div>
+
   <!-- Cabinet Counts -->
   <div class="card">
-    <div class="card-title">🗄 Cabinet Counts</div>
+    <div class="card-title">🗄 Cabinet Counts <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--faint)" id="room-label-cab">— Kitchen</span></div>
     <div id="cab-steppers"></div>
   </div>
 
   <!-- Specialty Add-ons -->
   <div class="card">
-    <div class="card-title">✦ Specialty Add-ons</div>
+    <div class="card-title">✦ Specialty Add-ons <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--faint)" id="room-label-spec">— Kitchen</span></div>
     <div id="specialty-steppers"></div>
     <div class="toggle-row" style="margin-top:8px; margin-bottom:0">
       <div class="toggle-info">
@@ -1149,6 +1243,16 @@ textarea {
       </div>
       <label class="toggle-switch">
         <input type="checkbox" id="toggle-soffit">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <div class="toggle-row" style="margin-top:8px; margin-bottom:0">
+      <div class="toggle-info">
+        <div class="toggle-label">Under-Counter Lighting</div>
+        <div class="toggle-sub">+1.0 hr — wiring, transformer, connect</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-uc-light">
         <span class="toggle-track"></span>
       </label>
     </div>
@@ -1178,6 +1282,11 @@ textarea {
           <input type="number" id="ctr-markup" value="15" min="0" max="100" oninput="updateCtrPreview()">
         </div>
       </div>
+      <div class="field" style="margin-bottom:10px">
+        <label class="field-label">Install Hours</label>
+        <input type="number" id="ctr-hours" value="2.0" min="0.5" max="20" step="0.5" oninput="updateCtrPreview()" style="max-width:120px">
+        <div style="font-size:11px; color:var(--faint); margin-top:3px; font-family:'IBM Plex Mono',monospace">Default 2.0 — adjust for complexity</div>
+      </div>
       <div id="ctr-preview">
         <div class="ctr-line"><span>Supplier cost</span><span id="cp-supplier">—</span></div>
         <div class="ctr-line"><span>Markup</span><span id="cp-markup">—</span></div>
@@ -1200,7 +1309,14 @@ textarea {
     </div>
     <div class="field">
       <label class="field-label">Cabinet Supplier / Manufacturer</label>
-      <input type="text" id="cab-supplier" placeholder="e.g. North & Brown, IKEA, etc.">
+      <div class="mfg-notes-row">
+        <input type="text" id="cab-supplier" placeholder="e.g. North & Brown, IKEA, etc." oninput="onSupplierChange()">
+        <button class="mfg-notes-btn" id="mfg-notes-btn" onclick="toggleMfgNotes()" title="Manufacturer notes">📝 Notes</button>
+      </div>
+      <div class="mfg-notes-area" id="mfg-notes-area">
+        <textarea id="mfg-notes-text" placeholder="e.g. Cabinets tend to run slightly wide. Euro hinges need 2mm spacer. Always confirm door overlay before install..." oninput="saveMfgNotes()"></textarea>
+        <div class="mfg-notes-saved" id="mfg-notes-saved">✓ Notes saved</div>
+      </div>
     </div>
     <div class="field">
       <label class="field-label">Payment Terms</label>
@@ -1392,8 +1508,10 @@ const RATES = {
   toekick: 0.35, hardware: 0.08,
   cleanup: 0.75, delivery: 2.5,
   float_shelf: 0.5, light_ch: 0.12,
+  uc_light_flat: 1.0,   // Under-counter lighting — flat connection/setup time
   pullout: 0.75, scribe: 0.5, soffit: 3.0,
-  ctr_install: 2.0,
+  baseboard: 0.35,      // Per piece — cut, cope, nail
+  ctr_install_default: 2.0,  // Default countertop install hrs (user can override)
   cons_base: 95, cons_per_cab: 3.5,
   // Retrofit extras
   demo_base: 3.0,       // Base demo hours
@@ -1416,10 +1534,11 @@ const CAB_FIELDS = [
 ];
 
 const SPEC_FIELDS = [
-  { id: 'f-shelves',  label: 'Floating Shelves',                    sub: '+0.5 hrs each' },
-  { id: 'f-lighting', label: 'Lighting Channel (linear ft)',        sub: '+0.12 hrs/ft' },
-  { id: 'f-pullout',  label: 'Pull-out / Magic Corner Units',       sub: '+0.75 hrs each' },
-  { id: 'f-scribe',   label: 'Filler Scribing Runs',                sub: '+0.5 hrs each' },
+  { id: 'f-shelves',    label: 'Floating Shelves',                    sub: '+0.5 hrs each' },
+  { id: 'f-lighting',   label: 'Lighting Channel (linear ft)',        sub: '+0.12 hrs/ft' },
+  { id: 'f-pullout',    label: 'Pull-out / Magic Corner Units',       sub: '+0.75 hrs each' },
+  { id: 'f-scribe',     label: 'Filler Scribing Runs',                sub: '+0.5 hrs each' },
+  { id: 'f-baseboard',  label: 'Baseboard Pieces (reinstall)',        sub: '+0.35 hrs each' },
 ];
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1518,6 +1637,8 @@ function saveToHistory(form, est, num) {
     totalHrs: est.totalHrs,
     grandTotal: est.grandTotal,
     ref: form.projectRef || '',
+    roomCount: form.rooms ? form.rooms.length : 1,
+    roomNames: form.rooms ? form.rooms.map(r => r.name).join(', ') : 'Kitchen',
   });
   // Keep last 50
   if (history.length > 50) history.length = 50;
@@ -1542,7 +1663,7 @@ function renderHistory() {
         <div class="hi-left">
           <div class="hi-client">${h.client}${typeBadge}</div>
           <div class="hi-date">${dateStr} · #${h.id}</div>
-          <div class="hi-meta">${h.totalCabs} cabinets · ${h.totalHrs.toFixed(1)} hrs${h.supplier ? ' · ' + h.supplier : ''}</div>
+          <div class="hi-meta">${h.totalCabs} cabinets · ${h.totalHrs.toFixed(1)} hrs${h.supplier ? ' · ' + h.supplier : ''}${h.roomCount > 1 ? ' · ' + h.roomCount + ' rooms' : ''}</div>
         </div>
         <div class="hi-total">$${h.grandTotal.toFixed(2)}</div>
       </div>
@@ -1571,7 +1692,178 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sk) { sk.value = 1; updateStepperHighlight(sk); }
   applyProfile();
   renderHistory();
+  initRooms();
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// ROOMS MANAGEMENT
+// ════════════════════════════════════════════════════════════════════════════
+
+const ROOM_TYPES = ['Kitchen', 'Bathroom', 'Laundry', 'Mudroom', 'Bar', 'Butler\'s Pantry', 'Vanity', 'Other'];
+
+let rooms = [];
+let activeRoomIdx = 0;
+
+function createEmptyRoom(name) {
+  return {
+    name: name || 'Kitchen',
+    cabs: { lowers:0, uppers:0, corners:0, tall:0, sink:1, islands:0, crownLF:0, crownCuts:0, toekick:1, hardware:0 },
+    spec: { shelves:0, lighting:0, pullout:0, scribe:0, baseboard:0 },
+    toggles: { soffit:false, ucLight:false },
+  };
+}
+
+function initRooms() {
+  rooms = [createEmptyRoom('Kitchen')];
+  activeRoomIdx = 0;
+  renderRoomTabs();
+}
+
+function renderRoomTabs() {
+  const container = document.getElementById('room-tabs');
+  container.innerHTML = rooms.map((r, i) => {
+    const total = Object.values(r.cabs).reduce((a,b) => a+b, 0);
+    const active = i === activeRoomIdx ? ' active' : '';
+    const removeBtn = rooms.length > 1 ? `<span class="room-remove-btn" onclick="event.stopPropagation(); removeRoom(${i})">✕</span>` : '';
+    return `<button class="room-tab${active}" onclick="switchRoom(${i})">${r.name}<span class="room-count">${total > 0 ? total : ''}</span>${removeBtn}</button>`;
+  }).join('') + '<button class="room-add-btn" onclick="addRoom()" title="Add room">+</button>';
+
+  // Update room labels on cards
+  const label = rooms[activeRoomIdx].name;
+  const labelCab = document.getElementById('room-label-cab');
+  const labelSpec = document.getElementById('room-label-spec');
+  if (labelCab) labelCab.textContent = '— ' + label;
+  if (labelSpec) labelSpec.textContent = '— ' + label;
+}
+
+function saveCurrentRoomState() {
+  const r = rooms[activeRoomIdx];
+  // Save cabinet counts
+  const g = id => parseInt(document.getElementById(id)?.value) || 0;
+  r.cabs = {
+    lowers: g('f-lowers'), uppers: g('f-uppers'), corners: g('f-corners'),
+    tall: g('f-tall'), sink: g('f-sink'), islands: g('f-islands'),
+    crownLF: g('f-crown-lf'), crownCuts: g('f-crown-cut'),
+    toekick: g('f-toekick'), hardware: g('f-hardware'),
+  };
+  r.spec = {
+    shelves: g('f-shelves'), lighting: g('f-lighting'),
+    pullout: g('f-pullout'), scribe: g('f-scribe'), baseboard: g('f-baseboard'),
+  };
+  r.toggles = {
+    soffit: document.getElementById('toggle-soffit')?.checked || false,
+    ucLight: document.getElementById('toggle-uc-light')?.checked || false,
+  };
+}
+
+function loadRoomState(idx) {
+  const r = rooms[idx];
+  const fieldMap = {
+    'f-lowers': r.cabs.lowers, 'f-uppers': r.cabs.uppers, 'f-corners': r.cabs.corners,
+    'f-tall': r.cabs.tall, 'f-sink': r.cabs.sink, 'f-islands': r.cabs.islands,
+    'f-crown-lf': r.cabs.crownLF, 'f-crown-cut': r.cabs.crownCuts,
+    'f-toekick': r.cabs.toekick, 'f-hardware': r.cabs.hardware,
+    'f-shelves': r.spec.shelves, 'f-lighting': r.spec.lighting,
+    'f-pullout': r.spec.pullout, 'f-scribe': r.spec.scribe, 'f-baseboard': r.spec.baseboard,
+  };
+  Object.entries(fieldMap).forEach(([id, val]) => {
+    const inp = document.getElementById(id);
+    if (inp) { inp.value = val; updateStepperHighlight(inp); }
+  });
+  const sof = document.getElementById('toggle-soffit');
+  if (sof) sof.checked = r.toggles.soffit || false;
+  const ucl = document.getElementById('toggle-uc-light');
+  if (ucl) ucl.checked = r.toggles.ucLight || false;
+}
+
+function switchRoom(idx) {
+  saveCurrentRoomState();
+  activeRoomIdx = idx;
+  loadRoomState(idx);
+  renderRoomTabs();
+}
+
+function addRoom() {
+  saveCurrentRoomState();
+  // Pick next room type that isn't already used
+  const usedNames = rooms.map(r => r.name);
+  let name = 'Bathroom';
+  for (const t of ROOM_TYPES) {
+    if (!usedNames.includes(t)) { name = t; break; }
+  }
+  rooms.push(createEmptyRoom(name));
+  activeRoomIdx = rooms.length - 1;
+  loadRoomState(activeRoomIdx);
+  renderRoomTabs();
+  showToast('Added ' + name);
+}
+
+function removeRoom(idx) {
+  if (rooms.length <= 1) return;
+  const name = rooms[idx].name;
+  rooms.splice(idx, 1);
+  if (activeRoomIdx >= rooms.length) activeRoomIdx = rooms.length - 1;
+  loadRoomState(activeRoomIdx);
+  renderRoomTabs();
+  showToast('Removed ' + name);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MANUFACTURER NOTES (localStorage)
+// ════════════════════════════════════════════════════════════════════════════
+
+function getMfgNotes() {
+  try { return JSON.parse(localStorage.getItem('pc_mfg_notes') || '{}'); } catch { return {}; }
+}
+
+function onSupplierChange() {
+  const supplier = document.getElementById('cab-supplier').value.trim();
+  const notes = getMfgNotes();
+  const btn = document.getElementById('mfg-notes-btn');
+  const area = document.getElementById('mfg-notes-area');
+  const textarea = document.getElementById('mfg-notes-text');
+
+  if (supplier && notes[supplier.toLowerCase()]) {
+    btn.classList.add('has-notes');
+    textarea.value = notes[supplier.toLowerCase()];
+    // Auto-open if notes exist
+    area.classList.add('open');
+  } else {
+    btn.classList.remove('has-notes');
+    textarea.value = '';
+    area.classList.remove('open');
+  }
+}
+
+function toggleMfgNotes() {
+  const area = document.getElementById('mfg-notes-area');
+  area.classList.toggle('open');
+  if (area.classList.contains('open')) {
+    document.getElementById('mfg-notes-text').focus();
+  }
+}
+
+function saveMfgNotes() {
+  const supplier = document.getElementById('cab-supplier').value.trim();
+  if (!supplier) return;
+  const notes = getMfgNotes();
+  const text = document.getElementById('mfg-notes-text').value.trim();
+  const btn = document.getElementById('mfg-notes-btn');
+
+  if (text) {
+    notes[supplier.toLowerCase()] = text;
+    btn.classList.add('has-notes');
+  } else {
+    delete notes[supplier.toLowerCase()];
+    btn.classList.remove('has-notes');
+  }
+  localStorage.setItem('pc_mfg_notes', JSON.stringify(notes));
+
+  // Flash saved indicator
+  const saved = document.getElementById('mfg-notes-saved');
+  saved.style.display = 'block';
+  setTimeout(() => saved.style.display = 'none', 1500);
+}
 
 function buildSteppers(containerId, fields) {
   const container = document.getElementById(containerId);
@@ -1672,7 +1964,8 @@ function updateCtrPreview() {
   }
 
   const markup     = cost * markupPct / 100;
-  const labourHrs  = RATES.ctr_install * diff;
+  const ctrHrsInput = parseFloat(document.getElementById('ctr-hours')?.value) || RATES.ctr_install_default;
+  const labourHrs  = ctrHrsInput * diff;
   const labourCost = labourHrs * rate;
   const total      = cost + markup + labourCost;
 
@@ -1729,6 +2022,7 @@ function processImage(file) {
         tallUnits: 'f-tall', sinkBases: 'f-sink', islands: 'f-islands',
         crownLF: 'f-crown-lf', crownCuts: 'f-crown-cut',
         toekickRuns: 'f-toekick', hardwareCount: 'f-hardware',
+        baseboardPieces: 'f-baseboard',
       };
       let filled = 0;
       Object.entries(fieldMap).forEach(([key, id]) => {
@@ -1737,6 +2031,61 @@ function processImage(file) {
           if (inp) { inp.value = result[key]; updateStepperHighlight(inp); filled++; }
         }
       });
+
+      // Auto-estimate crown moulding LF if not returned by AI but uppers detected
+      const crownInp = document.getElementById('f-crown-lf');
+      const uppersVal = parseInt(document.getElementById('f-uppers')?.value) || 0;
+      const cornersVal = parseInt(document.getElementById('f-corners')?.value) || 0;
+      if (crownInp && parseInt(crownInp.value) === 0 && uppersVal > 0) {
+        const estimatedLF = Math.round((uppersVal + cornersVal) * 2.5);
+        crownInp.value = estimatedLF;
+        updateStepperHighlight(crownInp);
+        const cutInp = document.getElementById('f-crown-cut');
+        if (cutInp && parseInt(cutInp.value) === 0) {
+          cutInp.value = Math.round(uppersVal / 2) + 2;
+          updateStepperHighlight(cutInp);
+        }
+      }
+
+      // Auto-set under-counter lighting toggle if detected
+      if (result.hasUCLighting) {
+        const ucToggle = document.getElementById('toggle-uc-light');
+        if (ucToggle) ucToggle.checked = true;
+        // Fill lighting channel LF if provided
+        if (result.ucLightingLF > 0) {
+          const litInp = document.getElementById('f-lighting');
+          if (litInp && parseInt(litInp.value) === 0) {
+            litInp.value = result.ucLightingLF;
+            updateStepperHighlight(litInp);
+          }
+        }
+      }
+
+      // Update active room name if room type detected
+      if (result.roomType) {
+        const typeMap = { kitchen:'Kitchen', bathroom:'Bathroom', laundry:'Laundry',
+          mudroom:'Mudroom', bar:'Bar', butler_pantry:"Butler's Pantry" };
+        const roomName = typeMap[result.roomType] || result.roomType;
+        if (rooms[activeRoomIdx]) {
+          rooms[activeRoomIdx].name = roomName;
+          renderRoomTabs();
+        }
+      }
+
+      // Auto-set difficulty if detected
+      if (result.difficulty && ['simple','standard','complex'].includes(result.difficulty)) {
+        setDifficulty(result.difficulty);
+      }
+
+      // Auto-set retrofit if detected
+      if (result.retrofit === true) {
+        setInstallType('retrofit');
+      }
+
+      // Fill client name from title block if empty
+      if (result.client && !document.getElementById('client-name').value) {
+        document.getElementById('client-name').value = result.client;
+      }
 
       status.className = 'done';
       status.textContent = '✓ ' + (result.notes || `Filled ${filled} fields from blueprint`);
@@ -1779,9 +2128,17 @@ async function generateScope(form, est) {
   if (form.shelves > 0)     parts.push(form.shelves + ' floating shelf' + (form.shelves > 1 ? 'ves' : ''));
   if (form.lighting > 0)    parts.push('under-cabinet lighting channel');
   if (form.pullout > 0)     parts.push('pull-out and corner hardware fitting');
+  if (form.baseboard > 0)   parts.push('baseboard reinstallation (' + form.baseboard + ' pieces)');
   if (form.soffit)          parts.push('light valance or soffit panel work');
+  if (form.ucLight)         parts.push('under-counter lighting installation');
   if (form.ctrInstall)      parts.push('countertop supply and installation');
   if (form.installType === 'retrofit') parts.push('demolition of existing cabinetry and wall preparation');
+
+  // Mention rooms if multiple
+  if (form.rooms && form.rooms.length > 1) {
+    const roomNames = form.rooms.map(r => r.name.toLowerCase()).join(', ');
+    parts.push('work across ' + form.rooms.length + ' rooms (' + roomNames + ')');
+  }
 
   const supplierNote = form.cabSupplier
     ? `cabinetry materials are supplied by ${form.cabSupplier}`
@@ -1804,31 +2161,44 @@ End with one sentence stating that all ${supplierNote}, and the quote covers lab
 // ════════════════════════════════════════════════════════════════════════════
 
 function getFormValues() {
-  const g = id => parseInt(document.getElementById(id)?.value) || 0;
   const f = id => parseFloat(document.getElementById(id)?.value) || 0;
   const b = id => document.getElementById(id)?.checked || false;
   const s = id => document.getElementById(id)?.value?.trim() || '';
 
+  // Save current room before aggregating
+  saveCurrentRoomState();
+
+  // Aggregate all rooms
+  let lowers=0, uppers=0, corners=0, tall=0, sink=0, islands=0;
+  let crownLF=0, crownCuts=0, toekick=0, hardware=0;
+  let shelves=0, lighting=0, pullout=0, scribe=0, baseboard=0;
+  let hasSoffit=false, hasUcLight=false;
+
+  rooms.forEach(r => {
+    lowers   += r.cabs.lowers;    uppers  += r.cabs.uppers;
+    corners  += r.cabs.corners;   tall    += r.cabs.tall;
+    sink     += r.cabs.sink;      islands += r.cabs.islands;
+    crownLF  += r.cabs.crownLF;   crownCuts += r.cabs.crownCuts;
+    toekick  += r.cabs.toekick;   hardware += r.cabs.hardware;
+    shelves  += r.spec.shelves;   lighting += r.spec.lighting;
+    pullout  += r.spec.pullout;   scribe  += r.spec.scribe;
+    baseboard += r.spec.baseboard;
+    if (r.toggles.soffit) hasSoffit = true;
+    if (r.toggles.ucLight) hasUcLight = true;
+  });
+
   return {
-    lowers:    g('f-lowers'),
-    uppers:    g('f-uppers'),
-    corners:   g('f-corners'),
-    tall:      g('f-tall'),
-    sink:      g('f-sink'),
-    islands:   g('f-islands'),
-    crownLF:   g('f-crown-lf'),
-    crownCuts: g('f-crown-cut'),
-    toekick:   g('f-toekick'),
-    hardware:  g('f-hardware'),
-    shelves:   g('f-shelves'),
-    lighting:  g('f-lighting'),
-    pullout:   g('f-pullout'),
-    scribe:    g('f-scribe'),
-    soffit:    b('toggle-soffit'),
+    rooms: JSON.parse(JSON.stringify(rooms)), // Deep copy for documents
+    lowers, uppers, corners, tall, sink, islands,
+    crownLF, crownCuts, toekick, hardware,
+    shelves, lighting, pullout, scribe, baseboard,
+    soffit:    hasSoffit,
+    ucLight:   hasUcLight,
     delivery:  b('toggle-delivery'),
     ctrInstall:b('toggle-ctr'),
     ctrCost:   f('ctr-cost'),
     ctrMarkup: f('ctr-markup'),
+    ctrHours:  parseFloat(document.getElementById('ctr-hours')?.value) || RATES.ctr_install_default,
     rate:      f('hourly-rate') || 75,
     difficulty:    currentDifficulty,
     installType:   currentInstallType,
@@ -1891,7 +2261,9 @@ function buildEstimate(form) {
   if (form.lighting > 0)add('Under-Cabinet Lighting Channel', RATES.light_ch, form.lighting,'Rout/fit channel, run wiring, clip profile');
   if (form.pullout > 0) add('Pull-out / Magic Corner Hardware', RATES.pullout,form.pullout, 'Fit mechanism, adjust travel, align doors');
   if (form.scribe > 0)  add('Filler Scribing (Uneven Walls)', RATES.scribe,  form.scribe,  'Measure, scribe, plane/cut, fit filler strip');
+  if (form.baseboard>0) add('Baseboard Reinstall',           RATES.baseboard, form.baseboard, 'Cut, cope, nail — transition pieces near kitchen');
   if (form.soffit)      add('Light Valance / Soffit Panel', RATES.soffit,    1,             'Frame, measure, fit panel around bulkhead or soffit');
+  if (form.ucLight)     add('Under-Counter Lighting Install', RATES.uc_light_flat, 1,       'Wire, mount transformer, connect LED strips, test');
 
   // Cleanup
   const cleanupHrs = isRetrofit ? 1.25 : 0.75;
@@ -1899,11 +2271,12 @@ function buildEstimate(form) {
   totalHrs += cleanupHrs;
 
   // Countertop
-  let ctr = { labourHrs: 0, supplierCost: 0, markup: 0, labourCost: 0, total: 0 };
+  let ctr = { labourHrs: 0, supplierCost: 0, markup: 0, labourCost: 0, total: 0, baseHrs: 0 };
   if (form.ctrInstall && form.ctrCost > 0) {
     ctr.supplierCost = form.ctrCost;
     ctr.markup       = parseFloat((form.ctrCost * form.ctrMarkup / 100).toFixed(2));
-    ctr.labourHrs    = parseFloat((RATES.ctr_install * diff).toFixed(2));
+    ctr.baseHrs      = form.ctrHours;
+    ctr.labourHrs    = parseFloat((form.ctrHours * diff).toFixed(2));
     ctr.labourCost   = parseFloat((ctr.labourHrs * form.rate).toFixed(2));
     ctr.total        = parseFloat((ctr.supplierCost + ctr.markup + ctr.labourCost).toFixed(2));
   }
@@ -1975,7 +2348,10 @@ async function calculate() {
   document.getElementById('inv-project-ref').textContent = form.projectRef ? 'Ref: ' + form.projectRef : '';
 
   const typeLabel = form.installType === 'retrofit' ? 'Retrofit Installation' : 'New Cabinet Installation';
-  document.getElementById('inv-type').textContent = typeLabel;
+  const roomsSuffix = (form.rooms && form.rooms.length > 1)
+    ? ' (' + form.rooms.map(r => r.name).join(', ') + ')'
+    : '';
+  document.getElementById('inv-type').textContent = typeLabel + roomsSuffix;
   document.getElementById('inv-delivery-note').textContent = form.delivery ? 'Includes delivery to site' : '';
   document.getElementById('inv-labour').textContent      = '$' + est.labourCost.toFixed(2);
   document.getElementById('inv-consumables').textContent = '$' + est.consumables.toFixed(2);
@@ -2053,6 +2429,15 @@ function renderWorkOrder(form, est, num, dateStr) {
   // Pills
   const pillsEl = document.getElementById('wo-pills');
   const pills = [];
+
+  // Room summary pills
+  if (form.rooms && form.rooms.length > 1) {
+    form.rooms.forEach(r => {
+      const rTotal = Object.values(r.cabs).reduce((a,b) => a+b, 0);
+      pills.push(`<span class="wo-pill blue">${r.name}: ${rTotal} units</span>`);
+    });
+  }
+
   if (form.lowers > 0)   pills.push(form.lowers + ' lowers');
   if (form.uppers > 0)   pills.push(form.uppers + ' uppers');
   if (form.corners > 0)  pills.push(form.corners + ' corners');
@@ -2063,7 +2448,9 @@ function renderWorkOrder(form, est, num, dateStr) {
   if (form.lighting > 0) pills.push(form.lighting + 'ft lighting');
   if (form.pullout > 0)  pills.push(form.pullout + ' pull-outs');
   if (form.scribe > 0)   pills.push(form.scribe + ' scribe');
+  if (form.baseboard>0)  pills.push(form.baseboard + ' baseboards');
   if (form.soffit)       pills.push('valance');
+  if (form.ucLight)      pills.push('UC lighting');
   if (form.delivery)     pills.push('<span class="wo-pill blue">delivery</span>');
   if (form.ctrInstall)   pills.push('countertop');
 
@@ -2130,21 +2517,27 @@ function renderWorkOrder(form, est, num, dateStr) {
     Difficulty: <strong>${diffLabel}</strong>.
     ${retroNote}
     Add-ons: delivery 2.5 hrs (fixed, not diff-adjusted) · floating shelf 0.5 hrs each ·
-    lighting channel 0.12 hrs/ft · pull-out hardware 0.75 hrs each ·
-    filler scribing 0.5 hrs/run · valance/soffit 3.0 hrs.
+    lighting channel 0.12 hrs/ft · under-counter lighting 1.0 hr (connect/test) · pull-out hardware 0.75 hrs each ·
+    filler scribing 0.5 hrs/run · baseboard reinstall 0.35 hrs/piece · valance/soffit 3.0 hrs.
     Crown: 0.05 hrs/LF + 0.08 hrs/cut · Toe kick: 0.35 hrs/run · Hardware: 0.08 hrs/hole.
     Consumables: $${RATES.cons_base} base + $${RATES.cons_per_cab}/cabinet.
     Includes 2.0 hrs mobilisation + ${isRetrofit ? '1.25' : '0.75'} hrs clean-up.
-    ${est.ctr.total > 0 ? `Countertop: supplier cost + ${form.ctrMarkup}% markup + ${est.ctr.labourHrs.toFixed(1)} hrs install.` : ''}
+    ${est.ctr.total > 0 ? `Countertop: supplier cost + ${form.ctrMarkup}% markup + ${est.ctr.baseHrs} hrs install (${est.ctr.labourHrs.toFixed(1)} hrs after diff).` : ''}
     <em>Rates based on JLC trade data and field-calibrated install records.</em>
   `;
 
-  // Installer notes
+  // Installer notes + manufacturer notes
   const notesSection = document.getElementById('wo-notes-section');
   const notesContent = document.getElementById('wo-notes-content');
-  if (form.installerNotes) {
+  const mfgNotesText = document.getElementById('mfg-notes-text')?.value?.trim() || '';
+  const combinedNotes = [
+    form.installerNotes,
+    mfgNotesText ? '⚠ Manufacturer notes (' + (form.cabSupplier || 'supplier') + '):\n' + mfgNotesText : '',
+  ].filter(Boolean).join('\n\n');
+
+  if (combinedNotes) {
     notesSection.style.display = 'block';
-    notesContent.textContent = form.installerNotes;
+    notesContent.textContent = combinedNotes;
   } else {
     notesSection.style.display = 'none';
   }
