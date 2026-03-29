@@ -203,7 +203,7 @@ textarea {
 .field:last-child { margin-bottom: 0; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-/* ── Difficulty / Install Type buttons ────────────────────────────────────── */
+/* ── Difficulty buttons ────────────────────────────────────────────────────── */
 .seg-group { display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
 .seg-btn {
   flex: 1;
@@ -367,6 +367,31 @@ textarea {
   display: none;
 }
 #ctr-preview.show { display: block; }
+#bs-preview {
+  background: var(--blue-bg);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-top: 12px;
+  display: none;
+}
+#bs-preview.show { display: block; }
+.bs-line {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  padding: 3px 0;
+  border-bottom: 1px solid #bfdbfe;
+  color: var(--blue);
+}
+.bs-line:last-child {
+  border-bottom: none;
+  font-weight: 700;
+  padding-top: 6px;
+  margin-top: 2px;
+  font-size: 14px;
+}
 .ctr-line {
   display: flex;
   justify-content: space-between;
@@ -1179,15 +1204,6 @@ textarea {
     <div class="card-title">⚙ Project Settings</div>
 
     <div class="field">
-      <label class="field-label">Install Type</label>
-      <div class="seg-group">
-        <button class="seg-btn active" id="type-new"     onclick="setInstallType('new')">New Install</button>
-        <button class="seg-btn"        id="type-retrofit" onclick="setInstallType('retrofit')">Retrofit</button>
-      </div>
-      <div class="seg-hint" id="type-hint">New construction — no existing cabinets to remove</div>
-    </div>
-
-    <div class="field">
       <label class="field-label">Difficulty</label>
       <div class="seg-group">
         <button class="seg-btn" id="diff-simple"   onclick="setDifficulty('simple')">Simple</button>
@@ -1236,26 +1252,6 @@ textarea {
   <div class="card">
     <div class="card-title">✦ Specialty Add-ons <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--faint)" id="room-label-spec">— Kitchen</span></div>
     <div id="specialty-steppers"></div>
-    <div class="toggle-row" style="margin-top:8px; margin-bottom:0">
-      <div class="toggle-info">
-        <div class="toggle-label">Light Valance / Soffit Panel</div>
-        <div class="toggle-sub">+3.0 hrs</div>
-      </div>
-      <label class="toggle-switch">
-        <input type="checkbox" id="toggle-soffit">
-        <span class="toggle-track"></span>
-      </label>
-    </div>
-    <div class="toggle-row" style="margin-top:8px; margin-bottom:0">
-      <div class="toggle-info">
-        <div class="toggle-label">Under-Counter Lighting</div>
-        <div class="toggle-sub">+1.0 hr — wiring, transformer, connect</div>
-      </div>
-      <label class="toggle-switch">
-        <input type="checkbox" id="toggle-uc-light">
-        <span class="toggle-track"></span>
-      </label>
-    </div>
   </div>
 
   <!-- Countertop -->
@@ -1292,6 +1288,59 @@ textarea {
         <div class="ctr-line"><span>Markup</span><span id="cp-markup">—</span></div>
         <div class="ctr-line"><span>Install labour</span><span id="cp-labour">—</span></div>
         <div class="ctr-line"><span>Subtotal</span><span id="cp-total">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backsplash -->
+  <div class="card">
+    <div class="card-title">🧱 Backsplash Install</div>
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <div class="toggle-label">Include Backsplash in Quote</div>
+        <div class="toggle-sub">Material cost + markup + install labour</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-bs" onchange="toggleBacksplash()">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <div id="bs-fields" style="display:none; margin-top:10px">
+      <div class="field" style="margin-bottom:10px">
+        <label class="field-label">Backsplash Area (sq ft)</label>
+        <input type="number" id="bs-sqft" placeholder="e.g. 30" min="0" oninput="updateBsPreview()">
+        <div style="font-size:11px; color:var(--faint); margin-top:3px; font-family:'IBM Plex Mono',monospace">Typical kitchen: 25–40 sq ft</div>
+      </div>
+      <div class="field-row" style="margin-bottom:10px">
+        <div class="field">
+          <label class="field-label">Material Cost ($)</label>
+          <input type="number" id="bs-cost" placeholder="e.g. 350" min="0" oninput="updateBsPreview()">
+        </div>
+        <div class="field">
+          <label class="field-label">Your Markup (%)</label>
+          <input type="number" id="bs-markup" value="15" min="0" max="100" oninput="updateBsPreview()">
+        </div>
+      </div>
+      <div class="field-row" style="margin-bottom:10px">
+        <div class="field">
+          <label class="field-label">Install Rate (hrs/sq ft)</label>
+          <input type="number" id="bs-rate" value="0.15" min="0.05" max="1.0" step="0.01" oninput="updateBsPreview()" style="max-width:120px">
+          <div style="font-size:11px; color:var(--faint); margin-top:3px; font-family:'IBM Plex Mono',monospace">Simple tile ~0.12 · Pattern ~0.20 · Mosaic ~0.30</div>
+        </div>
+        <div class="field">
+          <label class="field-label">Complexity</label>
+          <select id="bs-complexity" onchange="updateBsComplexity()">
+            <option value="simple">Simple (subway/stack)</option>
+            <option value="standard" selected>Standard (offset/brick)</option>
+            <option value="complex">Complex (herringbone/mosaic)</option>
+          </select>
+        </div>
+      </div>
+      <div id="bs-preview">
+        <div class="bs-line"><span>Material cost</span><span id="bp-material">—</span></div>
+        <div class="bs-line"><span>Markup</span><span id="bp-markup">—</span></div>
+        <div class="bs-line"><span>Install labour</span><span id="bp-labour">—</span></div>
+        <div class="bs-line"><span>Subtotal</span><span id="bp-total">—</span></div>
       </div>
     </div>
   </div>
@@ -1410,9 +1459,9 @@ textarea {
 
     <div class="inv-section">
       <div class="inv-section-label">Pricing</div>
-      <div class="price-row"><span class="pr-label">Labour</span><span class="pr-val" id="inv-labour">—</span></div>
-      <div class="price-row"><span class="pr-label">Consumables (screws, adhesive, blades &amp; sundries)</span><span class="pr-val" id="inv-consumables">—</span></div>
+      <div class="price-row"><span class="pr-label">Installation Labour &amp; Consumables</span><span class="pr-val" id="inv-labour">—</span></div>
       <div class="price-row" id="inv-ctr-row" style="display:none"><span class="pr-label">Countertop supply &amp; installation</span><span class="pr-val" id="inv-ctr">—</span></div>
+      <div class="price-row" id="inv-bs-row" style="display:none"><span class="pr-label">Backsplash supply &amp; installation</span><span class="pr-val" id="inv-bs">—</span></div>
       <div class="price-total-row">
         <div class="price-total-label">TOTAL (excl. HST)</div>
         <div class="price-total-val" id="inv-total">—</div>
@@ -1464,6 +1513,7 @@ textarea {
       </table>
       <div class="wo-totals" id="wo-totals"></div>
       <div class="ctr-breakdown" id="wo-ctr-breakdown" style="display:none"></div>
+      <div class="ctr-breakdown" id="wo-bs-breakdown" style="display:none"></div>
     </div>
 
     <div class="wo-section">
@@ -1512,12 +1562,8 @@ const RATES = {
   pullout: 0.75, scribe: 0.5, soffit: 3.0,
   baseboard: 0.35,      // Per piece — cut, cope, nail
   ctr_install_default: 2.0,  // Default countertop install hrs (user can override)
+  bs_rate_default: 0.15,    // Backsplash install hrs per sq ft (user can override)
   cons_base: 95, cons_per_cab: 3.5,
-  // Retrofit extras
-  demo_base: 3.0,       // Base demo hours
-  demo_per_cab: 0.25,   // Extra demo per existing cabinet
-  wall_prep: 1.5,       // Wall patching / prep
-  retrofit_mult: 1.15,  // 15% surcharge on install rates for retrofit
 };
 
 const CAB_FIELDS = [
@@ -1539,6 +1585,8 @@ const SPEC_FIELDS = [
   { id: 'f-pullout',    label: 'Pull-out / Magic Corner Units',       sub: '+0.75 hrs each' },
   { id: 'f-scribe',     label: 'Filler Scribing Runs',                sub: '+0.5 hrs each' },
   { id: 'f-baseboard',  label: 'Baseboard Pieces (reinstall)',        sub: '+0.35 hrs each' },
+  { id: 'f-soffit',     label: 'Light Valance / Soffit Panels',       sub: '+3.0 hrs each' },
+  { id: 'f-uclight',    label: 'Under-Counter Lighting Runs',         sub: '+1.0 hr each' },
 ];
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1631,7 +1679,6 @@ function saveToHistory(form, est, num) {
     client: form.clientName || 'Unnamed',
     address: form.clientAddr || '',
     supplier: form.cabSupplier || '',
-    type: form.installType,
     difficulty: form.difficulty,
     totalCabs: est.totalCabs,
     totalHrs: est.totalHrs,
@@ -1655,13 +1702,10 @@ function renderHistory() {
   container.innerHTML = history.map(h => {
     const d = new Date(h.date);
     const dateStr = d.toLocaleDateString('en-CA', { year:'numeric', month:'short', day:'numeric' });
-    const typeBadge = h.type === 'retrofit'
-      ? '<span class="hi-badge retro">RETROFIT</span>'
-      : '<span class="hi-badge new">NEW</span>';
     return `
       <div class="history-item">
         <div class="hi-left">
-          <div class="hi-client">${h.client}${typeBadge}</div>
+          <div class="hi-client">${h.client}</div>
           <div class="hi-date">${dateStr} · #${h.id}</div>
           <div class="hi-meta">${h.totalCabs} cabinets · ${h.totalHrs.toFixed(1)} hrs${h.supplier ? ' · ' + h.supplier : ''}${h.roomCount > 1 ? ' · ' + h.roomCount + ' rooms' : ''}</div>
         </div>
@@ -1708,8 +1752,8 @@ function createEmptyRoom(name) {
   return {
     name: name || 'Kitchen',
     cabs: { lowers:0, uppers:0, corners:0, tall:0, sink:1, islands:0, crownLF:0, crownCuts:0, toekick:1, hardware:0 },
-    spec: { shelves:0, lighting:0, pullout:0, scribe:0, baseboard:0 },
-    toggles: { soffit:false, ucLight:false },
+    spec: { shelves:0, lighting:0, pullout:0, scribe:0, baseboard:0, soffit:0, uclight:0 },
+    toggles: {},
   };
 }
 
@@ -1749,11 +1793,9 @@ function saveCurrentRoomState() {
   r.spec = {
     shelves: g('f-shelves'), lighting: g('f-lighting'),
     pullout: g('f-pullout'), scribe: g('f-scribe'), baseboard: g('f-baseboard'),
+    soffit: g('f-soffit'), uclight: g('f-uclight'),
   };
-  r.toggles = {
-    soffit: document.getElementById('toggle-soffit')?.checked || false,
-    ucLight: document.getElementById('toggle-uc-light')?.checked || false,
-  };
+  r.toggles = {};
 }
 
 function loadRoomState(idx) {
@@ -1765,15 +1807,12 @@ function loadRoomState(idx) {
     'f-toekick': r.cabs.toekick, 'f-hardware': r.cabs.hardware,
     'f-shelves': r.spec.shelves, 'f-lighting': r.spec.lighting,
     'f-pullout': r.spec.pullout, 'f-scribe': r.spec.scribe, 'f-baseboard': r.spec.baseboard,
+    'f-soffit': r.spec.soffit || 0, 'f-uclight': r.spec.uclight || 0,
   };
   Object.entries(fieldMap).forEach(([id, val]) => {
     const inp = document.getElementById(id);
     if (inp) { inp.value = val; updateStepperHighlight(inp); }
   });
-  const sof = document.getElementById('toggle-soffit');
-  if (sof) sof.checked = r.toggles.soffit || false;
-  const ucl = document.getElementById('toggle-uc-light');
-  if (ucl) ucl.checked = r.toggles.ucLight || false;
 }
 
 function switchRoom(idx) {
@@ -1900,24 +1939,6 @@ function updateStepperHighlight(inp) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// INSTALL TYPE
-// ════════════════════════════════════════════════════════════════════════════
-
-let currentInstallType = 'new';
-
-function setInstallType(t) {
-  currentInstallType = t;
-  ['new','retrofit'].forEach(x => {
-    document.getElementById('type-' + x).classList.toggle('active', x === t);
-  });
-  const hints = {
-    'new':       'New construction — no existing cabinets to remove',
-    'retrofit':  'Renovation — demo existing, prep walls, then install',
-  };
-  document.getElementById('type-hint').textContent = hints[t];
-}
-
-// ════════════════════════════════════════════════════════════════════════════
 // DIFFICULTY
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -1974,6 +1995,50 @@ function updateCtrPreview() {
   document.getElementById('cp-labour').textContent   = '$' + labourCost.toFixed(2) + ' (' + labourHrs.toFixed(1) + ' hrs)';
   document.getElementById('cp-total').textContent    = '$' + total.toFixed(2);
   document.getElementById('ctr-preview').classList.add('show');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// BACKSPLASH TOGGLE & PREVIEW
+// ════════════════════════════════════════════════════════════════════════════
+
+function toggleBacksplash() {
+  const on = document.getElementById('toggle-bs').checked;
+  document.getElementById('bs-fields').style.display = on ? 'block' : 'none';
+  updateBsPreview();
+}
+
+function updateBsComplexity() {
+  const complexity = document.getElementById('bs-complexity').value;
+  const rateInput = document.getElementById('bs-rate');
+  const rates = { simple: 0.12, standard: 0.15, complex: 0.30 };
+  rateInput.value = rates[complexity] || 0.15;
+  updateBsPreview();
+}
+
+function updateBsPreview() {
+  const on       = document.getElementById('toggle-bs').checked;
+  const sqft     = parseFloat(document.getElementById('bs-sqft')?.value) || 0;
+  const matCost  = parseFloat(document.getElementById('bs-cost')?.value) || 0;
+  const markupPct= parseFloat(document.getElementById('bs-markup')?.value) || 0;
+  const bsRate   = parseFloat(document.getElementById('bs-rate')?.value) || RATES.bs_rate_default;
+  const rate     = parseFloat(document.getElementById('hourly-rate').value) || 75;
+  const diff     = getDiffMult();
+
+  if (!on || sqft <= 0) {
+    document.getElementById('bs-preview')?.classList.remove('show');
+    return;
+  }
+
+  const markup     = matCost * markupPct / 100;
+  const labourHrs  = sqft * bsRate * diff;
+  const labourCost = labourHrs * rate;
+  const total      = matCost + markup + labourCost;
+
+  document.getElementById('bp-material').textContent = matCost > 0 ? '$' + matCost.toFixed(2) : '—';
+  document.getElementById('bp-markup').textContent   = matCost > 0 ? '$' + markup.toFixed(2) + ' (' + markupPct + '%)' : '—';
+  document.getElementById('bp-labour').textContent   = '$' + labourCost.toFixed(2) + ' (' + labourHrs.toFixed(1) + ' hrs @ ' + sqft + ' sq ft)';
+  document.getElementById('bp-total').textContent    = '$' + total.toFixed(2);
+  document.getElementById('bs-preview').classList.add('show');
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2047,10 +2112,13 @@ function processImage(file) {
         }
       }
 
-      // Auto-set under-counter lighting toggle if detected
+      // Auto-set under-counter lighting if detected
       if (result.hasUCLighting) {
-        const ucToggle = document.getElementById('toggle-uc-light');
-        if (ucToggle) ucToggle.checked = true;
+        const ucInp = document.getElementById('f-uclight');
+        if (ucInp && parseInt(ucInp.value) === 0) {
+          ucInp.value = 1;
+          updateStepperHighlight(ucInp);
+        }
         // Fill lighting channel LF if provided
         if (result.ucLightingLF > 0) {
           const litInp = document.getElementById('f-lighting');
@@ -2077,14 +2145,33 @@ function processImage(file) {
         setDifficulty(result.difficulty);
       }
 
-      // Auto-set retrofit if detected
-      if (result.retrofit === true) {
-        setInstallType('retrofit');
-      }
-
       // Fill client name from title block if empty
       if (result.client && !document.getElementById('client-name').value) {
         document.getElementById('client-name').value = result.client;
+      }
+
+      // Auto-toggle backsplash if detected
+      if (result.hasBacksplash) {
+        const bsToggle = document.getElementById('toggle-bs');
+        if (bsToggle && !bsToggle.checked) {
+          bsToggle.checked = true;
+          toggleBacksplash();
+        }
+        if (result.backsplashSqFt > 0) {
+          const sqftInp = document.getElementById('bs-sqft');
+          if (sqftInp) sqftInp.value = result.backsplashSqFt;
+        }
+        // Set complexity from type
+        if (result.backsplashType) {
+          const compSel = document.getElementById('bs-complexity');
+          if (compSel) {
+            if (['mosaic','herringbone'].includes(result.backsplashType)) compSel.value = 'complex';
+            else if (['slab'].includes(result.backsplashType)) compSel.value = 'simple';
+            else compSel.value = 'standard';
+            updateBsComplexity();
+          }
+        }
+        updateBsPreview();
       }
 
       status.className = 'done';
@@ -2129,10 +2216,10 @@ async function generateScope(form, est) {
   if (form.lighting > 0)    parts.push('under-cabinet lighting channel');
   if (form.pullout > 0)     parts.push('pull-out and corner hardware fitting');
   if (form.baseboard > 0)   parts.push('baseboard reinstallation (' + form.baseboard + ' pieces)');
-  if (form.soffit)          parts.push('light valance or soffit panel work');
-  if (form.ucLight)         parts.push('under-counter lighting installation');
+  if (form.soffit > 0)        parts.push('light valance or soffit panel work');
+  if (form.ucLight > 0)       parts.push('under-counter lighting installation');
   if (form.ctrInstall)      parts.push('countertop supply and installation');
-  if (form.installType === 'retrofit') parts.push('demolition of existing cabinetry and wall preparation');
+  if (form.bsInstall)       parts.push('backsplash tile supply and installation (' + form.bsSqft + ' sq ft)');
 
   // Mention rooms if multiple
   if (form.rooms && form.rooms.length > 1) {
@@ -2148,7 +2235,6 @@ async function generateScope(form, est) {
 Plain English only — no bullet points, no jargon, no mention of hours or rates.
 Sound like a skilled contractor explaining the job to a homeowner.
 Key elements: ${parts.join(', ')}.
-${form.installType === 'retrofit' ? 'This is a retrofit/renovation — existing cabinets will be removed and walls prepped before new installation.' : ''}
 ${currentDifficulty === 'complex' ? 'Note that the site requires additional precision due to site conditions.' : ''}
 End with one sentence stating that all ${supplierNote}, and the quote covers labour and installer consumables.`;
 
@@ -2172,7 +2258,7 @@ function getFormValues() {
   let lowers=0, uppers=0, corners=0, tall=0, sink=0, islands=0;
   let crownLF=0, crownCuts=0, toekick=0, hardware=0;
   let shelves=0, lighting=0, pullout=0, scribe=0, baseboard=0;
-  let hasSoffit=false, hasUcLight=false;
+  let soffit=0, uclight=0;
 
   rooms.forEach(r => {
     lowers   += r.cabs.lowers;    uppers  += r.cabs.uppers;
@@ -2183,8 +2269,8 @@ function getFormValues() {
     shelves  += r.spec.shelves;   lighting += r.spec.lighting;
     pullout  += r.spec.pullout;   scribe  += r.spec.scribe;
     baseboard += r.spec.baseboard;
-    if (r.toggles.soffit) hasSoffit = true;
-    if (r.toggles.ucLight) hasUcLight = true;
+    soffit   += r.spec.soffit || 0;
+    uclight  += r.spec.uclight || 0;
   });
 
   return {
@@ -2192,16 +2278,20 @@ function getFormValues() {
     lowers, uppers, corners, tall, sink, islands,
     crownLF, crownCuts, toekick, hardware,
     shelves, lighting, pullout, scribe, baseboard,
-    soffit:    hasSoffit,
-    ucLight:   hasUcLight,
+    soffit,
+    ucLight: uclight,
     delivery:  b('toggle-delivery'),
     ctrInstall:b('toggle-ctr'),
     ctrCost:   f('ctr-cost'),
     ctrMarkup: f('ctr-markup'),
     ctrHours:  parseFloat(document.getElementById('ctr-hours')?.value) || RATES.ctr_install_default,
+    bsInstall: b('toggle-bs'),
+    bsSqft:    f('bs-sqft'),
+    bsCost:    f('bs-cost'),
+    bsMarkup:  f('bs-markup'),
+    bsRate:    parseFloat(document.getElementById('bs-rate')?.value) || RATES.bs_rate_default,
     rate:      f('hourly-rate') || 75,
     difficulty:    currentDifficulty,
-    installType:   currentInstallType,
     clientName:    s('client-name'),
     clientAddr:    s('client-addr'),
     cabSupplier:   s('cab-supplier'),
@@ -2213,13 +2303,11 @@ function getFormValues() {
 
 function buildEstimate(form) {
   const diff = getDiffMult();
-  const isRetrofit = form.installType === 'retrofit';
-  const retroMult = isRetrofit ? RATES.retrofit_mult : 1.0;
   const lines = [];
   let totalHrs = 0;
 
   const add = (label, hrs, qty, note, fixed) => {
-    const total = parseFloat((hrs * qty * (fixed ? 1 : diff * retroMult)).toFixed(2));
+    const total = parseFloat((hrs * qty * (fixed ? 1 : diff)).toFixed(2));
     lines.push({ label, hrs: parseFloat(hrs.toFixed(2)), qty, total, note });
     totalHrs += total;
     return total;
@@ -2228,18 +2316,6 @@ function buildEstimate(form) {
   // Setup
   lines.push({ label: 'Mobilisation & Setup', hrs: 2.0, qty: 1, total: 2.0, note: 'Tools in, site survey, layout check' });
   totalHrs += 2.0;
-
-  // Retrofit: Demo & wall prep
-  if (isRetrofit) {
-    const totalCabs = form.lowers + form.uppers + form.corners + form.tall + form.sink + form.islands;
-    const demoHrs = RATES.demo_base + (RATES.demo_per_cab * totalCabs);
-    lines.push({ label: 'Demo & Removal of Existing Cabinets', hrs: parseFloat(demoHrs.toFixed(2)), qty: 1, total: parseFloat((demoHrs * diff).toFixed(2)), note: 'Disconnect, remove old cabinets, haul to staging' });
-    totalHrs += parseFloat((demoHrs * diff).toFixed(2));
-
-    const prepHrs = parseFloat((RATES.wall_prep * diff).toFixed(2));
-    lines.push({ label: 'Wall Prep & Patching', hrs: RATES.wall_prep, qty: 1, total: prepHrs, note: 'Patch holes, level check, repair drywall/plaster' });
-    totalHrs += prepHrs;
-  }
 
   // Delivery (fixed)
   if (form.delivery) add('Cabinet Delivery to Site', RATES.delivery, 1, 'Load, transport, unload & stage on site', true);
@@ -2262,13 +2338,12 @@ function buildEstimate(form) {
   if (form.pullout > 0) add('Pull-out / Magic Corner Hardware', RATES.pullout,form.pullout, 'Fit mechanism, adjust travel, align doors');
   if (form.scribe > 0)  add('Filler Scribing (Uneven Walls)', RATES.scribe,  form.scribe,  'Measure, scribe, plane/cut, fit filler strip');
   if (form.baseboard>0) add('Baseboard Reinstall',           RATES.baseboard, form.baseboard, 'Cut, cope, nail — transition pieces near kitchen');
-  if (form.soffit)      add('Light Valance / Soffit Panel', RATES.soffit,    1,             'Frame, measure, fit panel around bulkhead or soffit');
-  if (form.ucLight)     add('Under-Counter Lighting Install', RATES.uc_light_flat, 1,       'Wire, mount transformer, connect LED strips, test');
+  if (form.soffit > 0)   add('Light Valance / Soffit Panel', RATES.soffit,    form.soffit,   'Frame, measure, fit panel around bulkhead or soffit');
+  if (form.ucLight > 0)  add('Under-Counter Lighting Install', RATES.uc_light_flat, form.ucLight, 'Wire, mount transformer, connect LED strips, test');
 
   // Cleanup
-  const cleanupHrs = isRetrofit ? 1.25 : 0.75;
-  lines.push({ label: 'Clean-up & Punch-list', hrs: cleanupHrs, qty: 1, total: cleanupHrs, note: 'Door/drawer adjustment, debris removal, final wipe-down' + (isRetrofit ? ', dispose of demo debris' : '') });
-  totalHrs += cleanupHrs;
+  lines.push({ label: 'Clean-up & Punch-list', hrs: 0.75, qty: 1, total: 0.75, note: 'Door/drawer adjustment, debris removal, final wipe-down' });
+  totalHrs += 0.75;
 
   // Countertop
   let ctr = { labourHrs: 0, supplierCost: 0, markup: 0, labourCost: 0, total: 0, baseHrs: 0 };
@@ -2281,11 +2356,23 @@ function buildEstimate(form) {
     ctr.total        = parseFloat((ctr.supplierCost + ctr.markup + ctr.labourCost).toFixed(2));
   }
 
+  // Backsplash
+  let bs = { labourHrs: 0, materialCost: 0, markup: 0, labourCost: 0, total: 0, sqft: 0, rate: 0 };
+  if (form.bsInstall && form.bsSqft > 0) {
+    bs.sqft         = form.bsSqft;
+    bs.rate         = form.bsRate;
+    bs.materialCost = form.bsCost;
+    bs.markup       = parseFloat((form.bsCost * form.bsMarkup / 100).toFixed(2));
+    bs.labourHrs    = parseFloat((form.bsSqft * form.bsRate * diff).toFixed(2));
+    bs.labourCost   = parseFloat((bs.labourHrs * form.rate).toFixed(2));
+    bs.total        = parseFloat((bs.materialCost + bs.markup + bs.labourCost).toFixed(2));
+  }
+
   const totalCabs     = form.lowers + form.uppers + form.corners + form.tall + form.sink + form.islands;
   const consumables   = parseFloat((RATES.cons_base + RATES.cons_per_cab * totalCabs).toFixed(2));
   const labourCost    = parseFloat((totalHrs * form.rate).toFixed(2));
   const cabTotal      = parseFloat((labourCost + consumables).toFixed(2));
-  const grandTotal    = parseFloat((cabTotal + ctr.total).toFixed(2));
+  const grandTotal    = parseFloat((cabTotal + ctr.total + bs.total).toFixed(2));
 
   return {
     lines,
@@ -2294,6 +2381,7 @@ function buildEstimate(form) {
     consumables,
     cabTotal,
     ctr,
+    bs,
     grandTotal,
     totalCabs,
   };
@@ -2347,14 +2435,13 @@ async function calculate() {
   document.getElementById('inv-client-addr').textContent = form.clientAddr || '';
   document.getElementById('inv-project-ref').textContent = form.projectRef ? 'Ref: ' + form.projectRef : '';
 
-  const typeLabel = form.installType === 'retrofit' ? 'Retrofit Installation' : 'New Cabinet Installation';
+  const typeLabel = 'Cabinet Installation';
   const roomsSuffix = (form.rooms && form.rooms.length > 1)
     ? ' (' + form.rooms.map(r => r.name).join(', ') + ')'
     : '';
   document.getElementById('inv-type').textContent = typeLabel + roomsSuffix;
   document.getElementById('inv-delivery-note').textContent = form.delivery ? 'Includes delivery to site' : '';
-  document.getElementById('inv-labour').textContent      = '$' + est.labourCost.toFixed(2);
-  document.getElementById('inv-consumables').textContent = '$' + est.consumables.toFixed(2);
+  document.getElementById('inv-labour').textContent      = '$' + est.cabTotal.toFixed(2);
   document.getElementById('inv-terms').textContent       = form.paymentTerms;
 
   if (est.ctr.total > 0) {
@@ -2364,12 +2451,20 @@ async function calculate() {
     document.getElementById('inv-ctr-row').style.display = 'none';
   }
 
+  if (est.bs.total > 0) {
+    document.getElementById('inv-bs-row').style.display = 'flex';
+    document.getElementById('inv-bs').textContent = '$' + est.bs.total.toFixed(2);
+  } else {
+    document.getElementById('inv-bs-row').style.display = 'none';
+  }
+
   document.getElementById('inv-total').textContent = '$' + est.grandTotal.toFixed(2);
 
   const supplierName = form.cabSupplier || 'the client';
   document.getElementById('inv-note-text').textContent =
     'All cabinetry and hardware supplied by ' + supplierName + '.' +
     (est.ctr.total > 0 ? ' Countertop sourced and supplied by installer.' : '') +
+    (est.bs.total > 0 ? ' Backsplash material and installation by installer.' : '') +
     ' This quote covers labour and installer consumables only.';
 
   // Footer
@@ -2405,7 +2500,6 @@ async function calculate() {
 function renderWorkOrder(form, est, num, dateStr) {
   const diffLabel = form.difficulty === 'simple' ? 'Simple (0.8×)' :
                     form.difficulty === 'complex' ? 'Complex (1.25×)' : 'Standard (1.0×)';
-  const isRetrofit = form.installType === 'retrofit';
 
   // Header
   document.getElementById('wo-num').textContent  = '#' + num;
@@ -2418,13 +2512,9 @@ function renderWorkOrder(form, est, num, dateStr) {
 
   // Badges
   const badgesEl = document.getElementById('wo-badges');
-  const typeBadge = isRetrofit
-    ? '<span class="wo-badge badge-amber">RETROFIT</span>'
-    : '<span class="wo-badge badge-green">NEW INSTALL</span>';
   badgesEl.innerHTML =
-    typeBadge +
-    `<span class="wo-badge ${form.difficulty === 'complex' ? 'badge-red' : 'badge-blue'}">${diffLabel}</span>` +
-    (isRetrofit ? '<span class="wo-badge badge-red">DEMO REQUIRED</span>' : '');
+    `<span class="wo-badge badge-green">INSTALL</span>` +
+    `<span class="wo-badge ${form.difficulty === 'complex' ? 'badge-red' : 'badge-blue'}">${diffLabel}</span>`;
 
   // Pills
   const pillsEl = document.getElementById('wo-pills');
@@ -2449,10 +2539,11 @@ function renderWorkOrder(form, est, num, dateStr) {
   if (form.pullout > 0)  pills.push(form.pullout + ' pull-outs');
   if (form.scribe > 0)   pills.push(form.scribe + ' scribe');
   if (form.baseboard>0)  pills.push(form.baseboard + ' baseboards');
-  if (form.soffit)       pills.push('valance');
-  if (form.ucLight)      pills.push('UC lighting');
+  if (form.soffit > 0)   pills.push(form.soffit + ' valance');
+  if (form.ucLight > 0)  pills.push(form.ucLight + ' UC lighting');
   if (form.delivery)     pills.push('<span class="wo-pill blue">delivery</span>');
   if (form.ctrInstall)   pills.push('countertop');
+  if (form.bsInstall)    pills.push('backsplash');
 
   pillsEl.innerHTML =
     pills.map(p => p.startsWith('<') ? p : `<span class="wo-pill">${p}</span>`).join('') +
@@ -2478,6 +2569,7 @@ function renderWorkOrder(form, est, num, dateStr) {
     ['Consumables (screws, adhesive, blades, sundries)', '$' + est.consumables.toFixed(2)],
   ];
   if (est.ctr.total > 0) totalRows.push(['Countertop (supplier + markup + install)', '$' + est.ctr.total.toFixed(2)]);
+  if (est.bs.total > 0)  totalRows.push(['Backsplash (material + markup + install)', '$' + est.bs.total.toFixed(2)]);
 
   totalsEl.innerHTML =
     totalRows.map(([k, v]) => `
@@ -2506,23 +2598,35 @@ function renderWorkOrder(form, est, num, dateStr) {
     ctrBd.style.display = 'none';
   }
 
+  // Backsplash breakdown
+  const bsBd = document.getElementById('wo-bs-breakdown');
+  if (bsBd && est.bs.total > 0) {
+    bsBd.style.display = 'block';
+    bsBd.innerHTML = `
+      <div class="ctr-breakdown-title">Backsplash Breakdown</div>
+      <div class="ctr-bd-row"><span>Material cost</span><span>$${est.bs.materialCost.toFixed(2)}</span></div>
+      <div class="ctr-bd-row"><span>Markup (${form.bsMarkup}%)</span><span>$${est.bs.markup.toFixed(2)}</span></div>
+      <div class="ctr-bd-row"><span>Install labour (${est.bs.sqft} sq ft × ${est.bs.rate} hrs/ft × diff = ${est.bs.labourHrs.toFixed(1)} hrs × $${form.rate}/hr)</span><span>$${est.bs.labourCost.toFixed(2)}</span></div>
+      <div class="ctr-bd-row"><span>Backsplash subtotal</span><span>$${est.bs.total.toFixed(2)}</span></div>
+    `;
+  } else if (bsBd) {
+    bsBd.style.display = 'none';
+  }
+
   // Rationale
-  const retroNote = isRetrofit
-    ? `Retrofit surcharge: <strong>×${RATES.retrofit_mult}</strong> on install rates (demo complications, uneven surfaces). Demo: ${RATES.demo_base} hrs base + ${RATES.demo_per_cab} hrs/cabinet. Wall prep: ${RATES.wall_prep} hrs.`
-    : '';
   document.getElementById('wo-rationale').innerHTML = `
     Unit rates: lowers <strong>0.55 hrs</strong> · uppers <strong>0.50 hrs</strong> ·
     tall/pantry <strong>1.10 hrs</strong> (2×) · corner/lazy-susan <strong>0.88 hrs</strong> (1.6×) ·
     sink bases +0.50 hrs · islands +2.0 hrs base.
     Difficulty: <strong>${diffLabel}</strong>.
-    ${retroNote}
     Add-ons: delivery 2.5 hrs (fixed, not diff-adjusted) · floating shelf 0.5 hrs each ·
     lighting channel 0.12 hrs/ft · under-counter lighting 1.0 hr (connect/test) · pull-out hardware 0.75 hrs each ·
-    filler scribing 0.5 hrs/run · baseboard reinstall 0.35 hrs/piece · valance/soffit 3.0 hrs.
+    filler scribing 0.5 hrs/run · baseboard reinstall 0.35 hrs/piece · valance/soffit 3.0 hrs each.
     Crown: 0.05 hrs/LF + 0.08 hrs/cut · Toe kick: 0.35 hrs/run · Hardware: 0.08 hrs/hole.
     Consumables: $${RATES.cons_base} base + $${RATES.cons_per_cab}/cabinet.
-    Includes 2.0 hrs mobilisation + ${isRetrofit ? '1.25' : '0.75'} hrs clean-up.
+    Includes 2.0 hrs mobilisation + 0.75 hrs clean-up.
     ${est.ctr.total > 0 ? `Countertop: supplier cost + ${form.ctrMarkup}% markup + ${est.ctr.baseHrs} hrs install (${est.ctr.labourHrs.toFixed(1)} hrs after diff).` : ''}
+    ${est.bs.total > 0 ? `Backsplash: material + ${form.bsMarkup}% markup + ${est.bs.sqft} sq ft × ${est.bs.rate} hrs/ft install (${est.bs.labourHrs.toFixed(1)} hrs after diff).` : ''}
     <em>Rates based on JLC trade data and field-calibrated install records.</em>
   `;
 
