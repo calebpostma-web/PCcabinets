@@ -11,6 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <style>
 /* ── Reset & base ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -85,6 +87,11 @@ h1, h2, h3, .condensed { font-family: 'Barlow Condensed', sans-serif; }
   margin-top: 2px;
   font-family: 'IBM Plex Mono', monospace;
 }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
 /* ── Nav tabs ─────────────────────────────────────────────────────────────── */
 #nav-tabs {
@@ -112,6 +119,24 @@ h1, h2, h3, .condensed { font-family: 'Barlow Condensed', sans-serif; }
   color: #fff;
 }
 .nav-tab:disabled { opacity: .35; cursor: default; }
+
+/* ── Icon button (gear / history) ─────────────────────────────────────────── */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--border2);
+  background: transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--muted);
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn:active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 
 /* ── Main layout ──────────────────────────────────────────────────────────── */
 #main {
@@ -151,10 +176,10 @@ label.field-label {
   text-transform: uppercase;
   letter-spacing: .05em;
 }
-input[type=text], input[type=number], textarea, select {
+input[type=text], input[type=number], input[type=email], input[type=tel], textarea, select {
   width: 100%;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 16px; /* 16px minimum prevents iOS zoom */
+  font-size: 16px;
   padding: 11px 12px;
   border: 1.5px solid var(--border);
   border-radius: var(--r);
@@ -177,9 +202,8 @@ textarea {
 .field { margin-bottom: 14px; }
 .field:last-child { margin-bottom: 0; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 
-/* ── Difficulty buttons ────────────────────────────────────────────────────── */
+/* ── Difficulty / Install Type buttons ────────────────────────────────────── */
 .seg-group { display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: var(--r); overflow: hidden; }
 .seg-btn {
   flex: 1;
@@ -245,7 +269,7 @@ textarea {
 .toggle-switch input:checked + .toggle-track { background: var(--accent); }
 .toggle-switch input:checked + .toggle-track::before { transform: translateX(22px); }
 
-/* ── Stepper rows (cabinet counts & specialty) ────────────────────────────── */
+/* ── Stepper rows ─────────────────────────────────────────────────────────── */
 .stepper-row {
   display: flex;
   align-items: center;
@@ -302,8 +326,6 @@ textarea {
 .step-val::-webkit-outer-spin-button,
 .step-val::-webkit-inner-spin-button { -webkit-appearance: none; }
 .step-val:focus { outline: none; border-color: var(--accent); }
-
-/* Active stepper row highlight */
 .stepper-row.has-value .stepper-label { color: var(--accent); }
 .stepper-row.has-value { border-color: var(--border2); }
 
@@ -335,7 +357,7 @@ textarea {
 #bp-status.done     { background: var(--green-bg);  color: var(--green); display: block; }
 #bp-status.error    { background: #fef2f2; color: #b91c1c; display: block; }
 
-/* ── Countertop breakdown preview ─────────────────────────────────────────── */
+/* ── Countertop preview ───────────────────────────────────────────────────── */
 #ctr-preview {
   background: var(--amber-bg);
   border: 1px solid #fde68a;
@@ -419,6 +441,7 @@ textarea {
   display: flex;
   gap: 8px;
   margin-bottom: 14px;
+  flex-wrap: wrap;
 }
 .action-btn {
   flex: 1;
@@ -434,13 +457,21 @@ textarea {
   text-transform: uppercase;
   cursor: pointer;
   transition: all .15s;
+  min-width: 0;
+  white-space: nowrap;
 }
 .action-btn.primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
 }
+.action-btn.green {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
 .action-btn:active { opacity: .8; }
+.action-btn:disabled { opacity: .4; cursor: default; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
    CUSTOMER INVOICE
@@ -579,6 +610,27 @@ textarea {
   padding: 14px 18px;
   border-top: 1px solid var(--border);
 }
+/* Installer letterhead on invoice */
+.inv-letterhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 2px solid var(--accent);
+}
+.inv-logo { max-height: 50px; max-width: 120px; object-fit: contain; }
+.inv-company-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.inv-company-details {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
 
 /* ══════════════════════════════════════════════════════════════════════════════
    INSTALLER WORK ORDER
@@ -623,8 +675,6 @@ textarea {
 .wo-meta { display: flex; justify-content: space-between; align-items: flex-start; }
 .wo-num  { font-size: 12px; color: #555; font-family: 'IBM Plex Mono', monospace; text-align: right; }
 .wo-num span { display: block; color: #aaa; font-size: 13px; }
-
-/* Pill tags */
 .wo-pills { padding: 12px 16px; border-bottom: 1px solid #2a2a2a; display: flex; flex-wrap: wrap; gap: 5px; }
 .wo-pill {
   font-family: 'IBM Plex Mono', monospace;
@@ -637,8 +687,6 @@ textarea {
 }
 .wo-pill.accent { border-color: var(--accent); color: var(--accent); }
 .wo-pill.blue   { border-color: rgba(30,64,175,.5); color: #93c5fd; }
-
-/* Work order sections */
 .wo-section {
   padding: 14px 16px;
   border-bottom: 1px solid #222;
@@ -654,8 +702,6 @@ textarea {
   border-bottom: 1px solid #2a2a2a;
   padding-bottom: 5px;
 }
-
-/* Labour table */
 .wo-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .wo-table th {
   font-family: 'IBM Plex Mono', monospace;
@@ -679,8 +725,6 @@ textarea {
 .wo-table td.o  { color: var(--accent); font-weight: 600; text-align: right; font-family: 'IBM Plex Mono', monospace; }
 .wo-table td.n  { font-size: 11px; color: #555; font-style: italic; }
 .wo-table tr:last-child td { border-bottom: none; }
-
-/* Totals box */
 .wo-totals {
   background: #111;
   border: 1px solid #2a2a2a;
@@ -721,8 +765,6 @@ textarea {
   font-weight: 700;
   color: #fff;
 }
-
-/* Countertop breakdown */
 .ctr-breakdown {
   background: rgba(146,64,14,.12);
   border: 1px solid rgba(146,64,14,.3);
@@ -748,8 +790,6 @@ textarea {
   color: #9a7040;
 }
 .ctr-bd-row:last-child { border-bottom: none; color: #c47c0a; font-weight: 700; font-size: 13px; padding-top: 6px; }
-
-/* Rationale block */
 .wo-rationale {
   border-left: 3px solid var(--accent);
   padding: 12px 14px;
@@ -761,8 +801,6 @@ textarea {
 }
 .wo-rationale strong { color: #aaa; }
 .wo-rationale em { color: #444; display: block; margin-top: 6px; }
-
-/* Site notes */
 .wo-notes {
   border-left: 3px solid #c47c0a;
   padding: 12px 14px;
@@ -781,6 +819,143 @@ textarea {
   color: #2a2a2a;
   padding: 12px;
   text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   SETTINGS MODAL
+══════════════════════════════════════════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-sheet {
+  background: var(--surface);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: var(--r) var(--r) 0 0;
+  padding: 20px 16px;
+  box-shadow: 0 -8px 30px rgba(0,0,0,.2);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--border2);
+  background: transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Logo upload area */
+.logo-upload-area {
+  border: 2px dashed var(--border2);
+  border-radius: var(--r);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface2);
+  transition: all .15s;
+  margin-bottom: 14px;
+}
+.logo-upload-area:hover { border-color: var(--accent); background: var(--accent-bg); }
+.logo-upload-area img { max-height: 60px; max-width: 200px; display: block; margin: 0 auto 8px; }
+.logo-upload-hint { font-size: 12px; color: var(--faint); font-family: 'IBM Plex Mono', monospace; }
+.save-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.save-btn:active { background: var(--accent-dk); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   JOB HISTORY
+══════════════════════════════════════════════════════════════════════════════ */
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.history-item:hover { border-color: var(--accent); }
+.history-item:active { background: var(--accent-bg); }
+.hi-left { flex: 1; }
+.hi-client { font-weight: 500; font-size: 15px; color: var(--text); }
+.hi-date { font-size: 11px; color: var(--faint); font-family: 'IBM Plex Mono', monospace; margin-top: 2px; }
+.hi-meta { font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; margin-top: 2px; }
+.hi-total {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.hi-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: var(--r);
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: .03em;
+  margin-left: 8px;
+}
+.hi-badge.new { background: var(--green-bg); color: var(--green); }
+.hi-badge.retro { background: var(--amber-bg); color: var(--amber); }
+.empty-history {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--faint);
+  font-size: 14px;
+}
+.history-clear-btn {
+  display: block;
+  margin: 12px auto 0;
+  padding: 8px 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--faint);
+  font-size: 12px;
+  border-radius: var(--r);
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
 }
 
 /* ── Print ────────────────────────────────────────────────────────────────── */
@@ -822,15 +997,71 @@ textarea {
       <div class="logo">PC <span>Cabinets</span></div>
       <div class="tagline">Install Estimator</div>
     </div>
-    <div id="nav-tabs">
-      <button class="nav-tab active" id="tab-estimate" onclick="showView('estimate')">Estimate</button>
-      <button class="nav-tab" id="tab-docs" onclick="showView('docs')" disabled>Documents</button>
+    <div class="header-right">
+      <div id="nav-tabs">
+        <button class="nav-tab active" id="tab-estimate" onclick="showView('estimate')">Estimate</button>
+        <button class="nav-tab" id="tab-docs" onclick="showView('docs')" disabled>Documents</button>
+        <button class="nav-tab" id="tab-history" onclick="showView('history')">History</button>
+      </div>
+      <button class="icon-btn" onclick="openSettings()" title="Settings">⚙</button>
     </div>
   </div>
 </header>
 
 <!-- ── Toast ────────────────────────────────────────────────────────────────── -->
 <div id="toast"></div>
+
+<!-- ── Settings Modal ──────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">⚙ Your Business Profile</div>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.5">
+      Set up once — your logo and details will appear on every invoice automatically. Saved to this device.
+    </p>
+
+    <div class="logo-upload-area" onclick="document.getElementById('logo-file').click()">
+      <img id="logo-preview" style="display:none">
+      <div id="logo-placeholder">
+        <div style="font-size:28px; margin-bottom:4px">🏢</div>
+        <div class="logo-upload-hint">Tap to upload your logo</div>
+      </div>
+    </div>
+    <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="handleLogoUpload(this)">
+    <button id="remove-logo-btn" onclick="removeLogo()" style="display:none; margin:-8px 0 14px; padding:6px 12px; border:1px solid var(--border); background:transparent; color:var(--faint); font-size:11px; border-radius:var(--r); cursor:pointer; font-family:'IBM Plex Mono',monospace">Remove logo</button>
+
+    <div class="field">
+      <label class="field-label">Company / Business Name</label>
+      <input type="text" id="set-company" placeholder="e.g. KR Cabinet Installations">
+    </div>
+    <div class="field">
+      <label class="field-label">Address</label>
+      <input type="text" id="set-address" placeholder="e.g. 123 Main St, Chatham, ON">
+    </div>
+    <div class="field-row" style="margin-bottom:14px">
+      <div class="field">
+        <label class="field-label">Phone</label>
+        <input type="tel" id="set-phone" placeholder="e.g. 519-555-1234">
+      </div>
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="set-email" placeholder="e.g. kr@install.ca">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Default Hourly Rate ($)</label>
+      <input type="number" id="set-rate" value="75" min="20" max="500">
+    </div>
+    <div class="field">
+      <label class="field-label">Default Payment Terms</label>
+      <input type="text" id="set-terms" value="50% deposit required. Balance due on completion.">
+    </div>
+
+    <button class="save-btn" onclick="saveProfile()">Save Profile</button>
+  </div>
+</div>
 
 <!-- ════════════════════════════════════════════════════════════════════════════
      ESTIMATE VIEW
@@ -858,6 +1089,15 @@ textarea {
   <!-- Project Settings -->
   <div class="card">
     <div class="card-title">⚙ Project Settings</div>
+
+    <div class="field">
+      <label class="field-label">Install Type</label>
+      <div class="seg-group">
+        <button class="seg-btn active" id="type-new"     onclick="setInstallType('new')">New Install</button>
+        <button class="seg-btn"        id="type-retrofit" onclick="setInstallType('retrofit')">Retrofit</button>
+      </div>
+      <div class="seg-hint" id="type-hint">New construction — no existing cabinets to remove</div>
+    </div>
 
     <div class="field">
       <label class="field-label">Difficulty</label>
@@ -895,17 +1135,13 @@ textarea {
   <!-- Cabinet Counts -->
   <div class="card">
     <div class="card-title">🗄 Cabinet Counts</div>
-    <div id="cab-steppers">
-      <!-- populated by JS -->
-    </div>
+    <div id="cab-steppers"></div>
   </div>
 
   <!-- Specialty Add-ons -->
   <div class="card">
     <div class="card-title">✦ Specialty Add-ons</div>
-    <div id="specialty-steppers">
-      <!-- populated by JS -->
-    </div>
+    <div id="specialty-steppers"></div>
     <div class="toggle-row" style="margin-top:8px; margin-bottom:0">
       <div class="toggle-info">
         <div class="toggle-label">Light Valance / Soffit Panel</div>
@@ -963,6 +1199,10 @@ textarea {
       <input type="text" id="client-addr" placeholder="e.g. Ridgetown, ON">
     </div>
     <div class="field">
+      <label class="field-label">Cabinet Supplier / Manufacturer</label>
+      <input type="text" id="cab-supplier" placeholder="e.g. North & Brown, IKEA, etc.">
+    </div>
+    <div class="field">
       <label class="field-label">Payment Terms</label>
       <input type="text" id="payment-terms" value="50% deposit required. Balance due on completion.">
     </div>
@@ -977,9 +1217,8 @@ textarea {
   <!-- Calculate -->
   <button id="calc-btn" onclick="calculate()">CALCULATE &amp; GENERATE DOCUMENTS →</button>
 
-</div><!-- #main -->
-</div><!-- #view-estimate -->
-
+</div>
+</div>
 
 <!-- ════════════════════════════════════════════════════════════════════════════
      DOCUMENTS VIEW
@@ -1002,11 +1241,21 @@ textarea {
   <!-- Action row -->
   <div class="action-row no-print">
     <button class="action-btn" onclick="showView('estimate')">← Back</button>
-    <button class="action-btn primary" onclick="window.print()">🖨 Print / PDF</button>
+    <button class="action-btn primary" id="btn-download-pdf" onclick="downloadPDF()">📥 Download PDF</button>
+    <button class="action-btn" onclick="window.print()">🖨 Print</button>
   </div>
 
   <!-- Customer Invoice -->
   <div id="customer-doc">
+    <!-- Letterhead (dynamic) -->
+    <div class="inv-letterhead" id="inv-letterhead">
+      <img id="inv-logo" class="inv-logo" style="display:none">
+      <div>
+        <div class="inv-company-name" id="inv-company-name"></div>
+        <div class="inv-company-details" id="inv-company-details"></div>
+      </div>
+    </div>
+
     <div class="inv-section" style="padding-bottom:0; border-bottom:none">
       <div class="inv-top-row">
         <div>
@@ -1062,10 +1311,8 @@ textarea {
       </div>
     </div>
 
-    <div class="inv-footer" id="inv-footer">
-      PC Cabinets · Chatham, ON · Quote valid 30 days from date of issue
-    </div>
-  </div><!-- #customer-doc -->
+    <div class="inv-footer" id="inv-footer"></div>
+  </div>
 
   <!-- Work Order -->
   <div id="workorder-doc" style="display:none; margin-top:0">
@@ -1114,10 +1361,22 @@ textarea {
     </div>
 
     <div class="wo-internal">Internal document — not for client distribution</div>
-  </div><!-- #workorder-doc -->
+  </div>
 
-</div><!-- #main -->
-</div><!-- #view-docs -->
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     HISTORY VIEW
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="view-history" style="display:none">
+<div id="main">
+  <div class="card">
+    <div class="card-title">📋 Job History</div>
+    <div id="history-list"></div>
+  </div>
+</div>
+</div>
 
 
 <script>
@@ -1136,6 +1395,11 @@ const RATES = {
   pullout: 0.75, scribe: 0.5, soffit: 3.0,
   ctr_install: 2.0,
   cons_base: 95, cons_per_cab: 3.5,
+  // Retrofit extras
+  demo_base: 3.0,       // Base demo hours
+  demo_per_cab: 0.25,   // Extra demo per existing cabinet
+  wall_prep: 1.5,       // Wall patching / prep
+  retrofit_mult: 1.15,  // 15% surcharge on install rates for retrofit
 };
 
 const CAB_FIELDS = [
@@ -1159,18 +1423,154 @@ const SPEC_FIELDS = [
 ];
 
 // ════════════════════════════════════════════════════════════════════════════
+// PROFILE (localStorage)
+// ════════════════════════════════════════════════════════════════════════════
+
+function loadProfile() {
+  try {
+    return JSON.parse(localStorage.getItem('pc_profile') || '{}');
+  } catch { return {}; }
+}
+
+function saveProfile() {
+  const profile = {
+    company:  document.getElementById('set-company').value.trim(),
+    address:  document.getElementById('set-address').value.trim(),
+    phone:    document.getElementById('set-phone').value.trim(),
+    email:    document.getElementById('set-email').value.trim(),
+    rate:     parseFloat(document.getElementById('set-rate').value) || 75,
+    terms:    document.getElementById('set-terms').value.trim(),
+    logo:     document.getElementById('logo-preview').src || '',
+    hasLogo:  document.getElementById('logo-preview').style.display !== 'none',
+  };
+  localStorage.setItem('pc_profile', JSON.stringify(profile));
+  // Apply defaults to form
+  document.getElementById('hourly-rate').value = profile.rate;
+  document.getElementById('payment-terms').value = profile.terms;
+  closeSettings();
+  showToast('Profile saved ✓');
+}
+
+function applyProfile() {
+  const p = loadProfile();
+  if (p.company) document.getElementById('set-company').value = p.company;
+  if (p.address) document.getElementById('set-address').value = p.address;
+  if (p.phone)   document.getElementById('set-phone').value   = p.phone;
+  if (p.email)   document.getElementById('set-email').value   = p.email;
+  if (p.rate)    { document.getElementById('set-rate').value = p.rate; document.getElementById('hourly-rate').value = p.rate; }
+  if (p.terms)   { document.getElementById('set-terms').value = p.terms; document.getElementById('payment-terms').value = p.terms; }
+  if (p.hasLogo && p.logo) {
+    document.getElementById('logo-preview').src = p.logo;
+    document.getElementById('logo-preview').style.display = 'block';
+    document.getElementById('logo-placeholder').style.display = 'none';
+    document.getElementById('remove-logo-btn').style.display = 'block';
+  }
+}
+
+function handleLogoUpload(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('logo-preview').src = e.target.result;
+    document.getElementById('logo-preview').style.display = 'block';
+    document.getElementById('logo-placeholder').style.display = 'none';
+    document.getElementById('remove-logo-btn').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+  document.getElementById('logo-preview').src = '';
+  document.getElementById('logo-preview').style.display = 'none';
+  document.getElementById('logo-placeholder').style.display = 'block';
+  document.getElementById('remove-logo-btn').style.display = 'none';
+  document.getElementById('logo-file').value = '';
+}
+
+function openSettings() { document.getElementById('settings-modal').classList.add('open'); }
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+
+// Close modal on overlay click
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'settings-modal') closeSettings();
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// JOB HISTORY (localStorage)
+// ════════════════════════════════════════════════════════════════════════════
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('pc_history') || '[]'); } catch { return []; }
+}
+
+function saveToHistory(form, est, num) {
+  const history = getHistory();
+  history.unshift({
+    id: num,
+    date: new Date().toISOString(),
+    client: form.clientName || 'Unnamed',
+    address: form.clientAddr || '',
+    supplier: form.cabSupplier || '',
+    type: form.installType,
+    difficulty: form.difficulty,
+    totalCabs: est.totalCabs,
+    totalHrs: est.totalHrs,
+    grandTotal: est.grandTotal,
+    ref: form.projectRef || '',
+  });
+  // Keep last 50
+  if (history.length > 50) history.length = 50;
+  localStorage.setItem('pc_history', JSON.stringify(history));
+}
+
+function renderHistory() {
+  const history = getHistory();
+  const container = document.getElementById('history-list');
+  if (history.length === 0) {
+    container.innerHTML = '<div class="empty-history">No jobs yet. Generate your first estimate to start building history.</div>';
+    return;
+  }
+  container.innerHTML = history.map(h => {
+    const d = new Date(h.date);
+    const dateStr = d.toLocaleDateString('en-CA', { year:'numeric', month:'short', day:'numeric' });
+    const typeBadge = h.type === 'retrofit'
+      ? '<span class="hi-badge retro">RETROFIT</span>'
+      : '<span class="hi-badge new">NEW</span>';
+    return `
+      <div class="history-item">
+        <div class="hi-left">
+          <div class="hi-client">${h.client}${typeBadge}</div>
+          <div class="hi-date">${dateStr} · #${h.id}</div>
+          <div class="hi-meta">${h.totalCabs} cabinets · ${h.totalHrs.toFixed(1)} hrs${h.supplier ? ' · ' + h.supplier : ''}</div>
+        </div>
+        <div class="hi-total">$${h.grandTotal.toFixed(2)}</div>
+      </div>
+    `;
+  }).join('') + '<button class="history-clear-btn" onclick="clearHistory()">Clear all history</button>';
+}
+
+function clearHistory() {
+  if (confirm('Clear all job history from this device?')) {
+    localStorage.removeItem('pc_history');
+    renderHistory();
+    showToast('History cleared');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
   buildSteppers('cab-steppers', CAB_FIELDS);
   buildSteppers('specialty-steppers', SPEC_FIELDS);
-  // Default toekick to 1
   const tk = document.getElementById('f-toekick');
   if (tk) { tk.value = 1; updateStepperHighlight(tk); }
-  // Default sink to 1
   const sk = document.getElementById('f-sink');
   if (sk) { sk.value = 1; updateStepperHighlight(sk); }
+  applyProfile();
+  renderHistory();
 });
 
 function buildSteppers(containerId, fields) {
@@ -1205,6 +1605,24 @@ function updateStepperHighlight(inp) {
     if (parseInt(inp.value) > 0) row.classList.add('has-value');
     else row.classList.remove('has-value');
   }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// INSTALL TYPE
+// ════════════════════════════════════════════════════════════════════════════
+
+let currentInstallType = 'new';
+
+function setInstallType(t) {
+  currentInstallType = t;
+  ['new','retrofit'].forEach(x => {
+    document.getElementById('type-' + x).classList.toggle('active', x === t);
+  });
+  const hints = {
+    'new':       'New construction — no existing cabinets to remove',
+    'retrofit':  'Renovation — demo existing, prep walls, then install',
+  };
+  document.getElementById('type-hint').textContent = hints[t];
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1273,7 +1691,7 @@ function handleDrop(e) {
   e.preventDefault();
   document.getElementById('drop-zone').classList.remove('drag-over');
   const file = e.dataTransfer?.files?.[0];
-  if (file && file.type.startsWith('image/')) processImage(file);
+  if (file) processImage(file);
 }
 
 function handleFileSelect(input) {
@@ -1285,7 +1703,6 @@ function processImage(file) {
   const reader = new FileReader();
   reader.onload = async (e) => {
     const dataUrl = e.target.result;
-    // Show preview
     const preview = document.getElementById('bp-preview');
     const placeholder = document.getElementById('dz-placeholder');
     if (file.type === 'application/pdf') {
@@ -1298,7 +1715,6 @@ function processImage(file) {
       placeholder.style.display = 'none';
     }
 
-    // Scan
     const status = document.getElementById('bp-status');
     status.className = 'scanning';
     status.textContent = '⏳ Scanning blueprint…';
@@ -1308,7 +1724,6 @@ function processImage(file) {
       const mediaType = file.type || 'image/jpeg';
       const result = await callProxy('scanBlueprint', { imageBase64: base64, mediaType });
 
-      // Fill in fields
       const fieldMap = {
         lowers: 'f-lowers', uppers: 'f-uppers', corners: 'f-corners',
         tallUnits: 'f-tall', sinkBases: 'f-sink', islands: 'f-islands',
@@ -1366,13 +1781,19 @@ async function generateScope(form, est) {
   if (form.pullout > 0)     parts.push('pull-out and corner hardware fitting');
   if (form.soffit)          parts.push('light valance or soffit panel work');
   if (form.ctrInstall)      parts.push('countertop supply and installation');
+  if (form.installType === 'retrofit') parts.push('demolition of existing cabinetry and wall preparation');
+
+  const supplierNote = form.cabSupplier
+    ? `cabinetry materials are supplied by ${form.cabSupplier}`
+    : 'cabinetry materials are supplied by the client or sourced by the installer as noted';
 
   const prompt = `Write a professional 2–3 sentence scope-of-work description for a CUSTOMER installation quote.
 Plain English only — no bullet points, no jargon, no mention of hours or rates.
 Sound like a skilled contractor explaining the job to a homeowner.
 Key elements: ${parts.join(', ')}.
+${form.installType === 'retrofit' ? 'This is a retrofit/renovation — existing cabinets will be removed and walls prepped before new installation.' : ''}
 ${currentDifficulty === 'complex' ? 'Note that the site requires additional precision due to site conditions.' : ''}
-End with one sentence stating that all cabinetry materials are supplied by the client or sourced by the installer as noted, and the quote covers labour and installer consumables.`;
+End with one sentence stating that all ${supplierNote}, and the quote covers labour and installer consumables.`;
 
   const result = await callProxy('generateScope', { prompt });
   return result.text || '';
@@ -1409,22 +1830,26 @@ function getFormValues() {
     ctrCost:   f('ctr-cost'),
     ctrMarkup: f('ctr-markup'),
     rate:      f('hourly-rate') || 75,
-    difficulty: currentDifficulty,
-    clientName: s('client-name'),
-    clientAddr: s('client-addr'),
-    projectRef: s('project-ref'),
-    paymentTerms: s('payment-terms'),
-    installerNotes: s('installer-notes'),
+    difficulty:    currentDifficulty,
+    installType:   currentInstallType,
+    clientName:    s('client-name'),
+    clientAddr:    s('client-addr'),
+    cabSupplier:   s('cab-supplier'),
+    projectRef:    s('project-ref'),
+    paymentTerms:  s('payment-terms'),
+    installerNotes:s('installer-notes'),
   };
 }
 
 function buildEstimate(form) {
   const diff = getDiffMult();
+  const isRetrofit = form.installType === 'retrofit';
+  const retroMult = isRetrofit ? RATES.retrofit_mult : 1.0;
   const lines = [];
   let totalHrs = 0;
 
   const add = (label, hrs, qty, note, fixed) => {
-    const total = parseFloat((hrs * qty * (fixed ? 1 : diff)).toFixed(2));
+    const total = parseFloat((hrs * qty * (fixed ? 1 : diff * retroMult)).toFixed(2));
     lines.push({ label, hrs: parseFloat(hrs.toFixed(2)), qty, total, note });
     totalHrs += total;
     return total;
@@ -1434,7 +1859,19 @@ function buildEstimate(form) {
   lines.push({ label: 'Mobilisation & Setup', hrs: 2.0, qty: 1, total: 2.0, note: 'Tools in, site survey, layout check' });
   totalHrs += 2.0;
 
-  // Delivery (fixed — not diff adjusted)
+  // Retrofit: Demo & wall prep
+  if (isRetrofit) {
+    const totalCabs = form.lowers + form.uppers + form.corners + form.tall + form.sink + form.islands;
+    const demoHrs = RATES.demo_base + (RATES.demo_per_cab * totalCabs);
+    lines.push({ label: 'Demo & Removal of Existing Cabinets', hrs: parseFloat(demoHrs.toFixed(2)), qty: 1, total: parseFloat((demoHrs * diff).toFixed(2)), note: 'Disconnect, remove old cabinets, haul to staging' });
+    totalHrs += parseFloat((demoHrs * diff).toFixed(2));
+
+    const prepHrs = parseFloat((RATES.wall_prep * diff).toFixed(2));
+    lines.push({ label: 'Wall Prep & Patching', hrs: RATES.wall_prep, qty: 1, total: prepHrs, note: 'Patch holes, level check, repair drywall/plaster' });
+    totalHrs += prepHrs;
+  }
+
+  // Delivery (fixed)
   if (form.delivery) add('Cabinet Delivery to Site', RATES.delivery, 1, 'Load, transport, unload & stage on site', true);
 
   // Core install
@@ -1457,8 +1894,9 @@ function buildEstimate(form) {
   if (form.soffit)      add('Light Valance / Soffit Panel', RATES.soffit,    1,             'Frame, measure, fit panel around bulkhead or soffit');
 
   // Cleanup
-  lines.push({ label: 'Clean-up & Punch-list', hrs: 0.75, qty: 1, total: 0.75, note: 'Door/drawer adjustment, debris removal, final wipe-down' });
-  totalHrs += 0.75;
+  const cleanupHrs = isRetrofit ? 1.25 : 0.75;
+  lines.push({ label: 'Clean-up & Punch-list', hrs: cleanupHrs, qty: 1, total: cleanupHrs, note: 'Door/drawer adjustment, debris removal, final wipe-down' + (isRetrofit ? ', dispose of demo debris' : '') });
+  totalHrs += cleanupHrs;
 
   // Countertop
   let ctr = { labourHrs: 0, supplierCost: 0, markup: 0, labourCost: 0, total: 0 };
@@ -1495,6 +1933,7 @@ function buildEstimate(form) {
 let currentEstimate = null;
 let currentForm     = null;
 let invoiceNum      = '';
+let currentDocView  = 'customer';
 
 async function calculate() {
   const form = getFormValues();
@@ -1506,13 +1945,37 @@ async function calculate() {
   invoiceNum = 'KCI-' + Date.now().toString().slice(-6);
   const dateStr = now.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: '2-digit' });
 
+  // Populate letterhead
+  const profile = loadProfile();
+  const letterhead = document.getElementById('inv-letterhead');
+  const invLogo = document.getElementById('inv-logo');
+  const companyName = document.getElementById('inv-company-name');
+  const companyDetails = document.getElementById('inv-company-details');
+
+  if (profile.company) {
+    letterhead.style.display = 'flex';
+    companyName.textContent = profile.company;
+    const details = [profile.address, profile.phone, profile.email].filter(Boolean).join(' · ');
+    companyDetails.textContent = details;
+    if (profile.hasLogo && profile.logo) {
+      invLogo.src = profile.logo;
+      invLogo.style.display = 'block';
+    } else {
+      invLogo.style.display = 'none';
+    }
+  } else {
+    letterhead.style.display = 'none';
+  }
+
   // Populate customer invoice
   document.getElementById('inv-num').textContent  = '#' + invoiceNum;
   document.getElementById('inv-date').textContent = dateStr;
   document.getElementById('inv-client-name').textContent = form.clientName || '—';
   document.getElementById('inv-client-addr').textContent = form.clientAddr || '';
   document.getElementById('inv-project-ref').textContent = form.projectRef ? 'Ref: ' + form.projectRef : '';
-  document.getElementById('inv-type').textContent = 'New Cabinet Installation';
+
+  const typeLabel = form.installType === 'retrofit' ? 'Retrofit Installation' : 'New Cabinet Installation';
+  document.getElementById('inv-type').textContent = typeLabel;
   document.getElementById('inv-delivery-note').textContent = form.delivery ? 'Includes delivery to site' : '';
   document.getElementById('inv-labour').textContent      = '$' + est.labourCost.toFixed(2);
   document.getElementById('inv-consumables').textContent = '$' + est.consumables.toFixed(2);
@@ -1526,12 +1989,18 @@ async function calculate() {
   }
 
   document.getElementById('inv-total').textContent = '$' + est.grandTotal.toFixed(2);
+
+  const supplierName = form.cabSupplier || 'the client';
   document.getElementById('inv-note-text').textContent =
-    'All cabinetry and hardware supplied by client / North & Brown.' +
+    'All cabinetry and hardware supplied by ' + supplierName + '.' +
     (est.ctr.total > 0 ? ' Countertop sourced and supplied by installer.' : '') +
     ' This quote covers labour and installer consumables only.';
 
-  // Scope — loading state, then async
+  // Footer
+  const footerParts = [profile.company || 'PC Cabinets', profile.address || ''].filter(Boolean);
+  document.getElementById('inv-footer').textContent = footerParts.join(' · ') + ' · Quote valid 30 days from date of issue';
+
+  // Scope
   const scopeEl = document.getElementById('inv-scope');
   scopeEl.className = 'inv-scope-box inv-scope-loading';
   scopeEl.textContent = 'Writing description…';
@@ -1542,6 +2011,9 @@ async function calculate() {
   // Switch view
   showView('docs');
   showDoc('customer');
+
+  // Save to history
+  saveToHistory(form, est, invoiceNum);
 
   // Generate scope in background
   try {
@@ -1557,6 +2029,7 @@ async function calculate() {
 function renderWorkOrder(form, est, num, dateStr) {
   const diffLabel = form.difficulty === 'simple' ? 'Simple (0.8×)' :
                     form.difficulty === 'complex' ? 'Complex (1.25×)' : 'Standard (1.0×)';
+  const isRetrofit = form.installType === 'retrofit';
 
   // Header
   document.getElementById('wo-num').textContent  = '#' + num;
@@ -1564,13 +2037,18 @@ function renderWorkOrder(form, est, num, dateStr) {
   document.getElementById('wo-client').textContent =
     (form.clientName || 'Client TBD') + ' · ' +
     (form.clientAddr || 'Address TBD') +
-    (form.projectRef ? ' · Ref: ' + form.projectRef : '');
+    (form.projectRef ? ' · Ref: ' + form.projectRef : '') +
+    (form.cabSupplier ? ' · Supplier: ' + form.cabSupplier : '');
 
   // Badges
   const badgesEl = document.getElementById('wo-badges');
+  const typeBadge = isRetrofit
+    ? '<span class="wo-badge badge-amber">RETROFIT</span>'
+    : '<span class="wo-badge badge-green">NEW INSTALL</span>';
   badgesEl.innerHTML =
-    '<span class="wo-badge badge-green">NEW INSTALL</span>' +
-    `<span class="wo-badge ${form.difficulty === 'complex' ? 'badge-red' : 'badge-blue'}">${diffLabel}</span>`;
+    typeBadge +
+    `<span class="wo-badge ${form.difficulty === 'complex' ? 'badge-red' : 'badge-blue'}">${diffLabel}</span>` +
+    (isRetrofit ? '<span class="wo-badge badge-red">DEMO REQUIRED</span>' : '');
 
   // Pills
   const pillsEl = document.getElementById('wo-pills');
@@ -1608,7 +2086,7 @@ function renderWorkOrder(form, est, num, dateStr) {
   // Totals
   const totalsEl = document.getElementById('wo-totals');
   const totalRows = [
-    ['Total cabinet install hours', est.totalHrs.toFixed(2) + ' hrs'],
+    ['Total install hours', est.totalHrs.toFixed(2) + ' hrs'],
     [`Labour (${est.totalHrs.toFixed(2)} hrs × $${form.rate}/hr)`, '$' + est.labourCost.toFixed(2)],
     ['Consumables (screws, adhesive, blades, sundries)', '$' + est.consumables.toFixed(2)],
   ];
@@ -1642,19 +2120,23 @@ function renderWorkOrder(form, est, num, dateStr) {
   }
 
   // Rationale
+  const retroNote = isRetrofit
+    ? `Retrofit surcharge: <strong>×${RATES.retrofit_mult}</strong> on install rates (demo complications, uneven surfaces). Demo: ${RATES.demo_base} hrs base + ${RATES.demo_per_cab} hrs/cabinet. Wall prep: ${RATES.wall_prep} hrs.`
+    : '';
   document.getElementById('wo-rationale').innerHTML = `
     Unit rates: lowers <strong>0.55 hrs</strong> · uppers <strong>0.50 hrs</strong> ·
     tall/pantry <strong>1.10 hrs</strong> (2×) · corner/lazy-susan <strong>0.88 hrs</strong> (1.6×) ·
     sink bases +0.50 hrs · islands +2.0 hrs base.
     Difficulty: <strong>${diffLabel}</strong>.
+    ${retroNote}
     Add-ons: delivery 2.5 hrs (fixed, not diff-adjusted) · floating shelf 0.5 hrs each ·
     lighting channel 0.12 hrs/ft · pull-out hardware 0.75 hrs each ·
     filler scribing 0.5 hrs/run · valance/soffit 3.0 hrs.
     Crown: 0.05 hrs/LF + 0.08 hrs/cut · Toe kick: 0.35 hrs/run · Hardware: 0.08 hrs/hole.
     Consumables: $${RATES.cons_base} base + $${RATES.cons_per_cab}/cabinet.
-    Includes 2.0 hrs mobilisation + 0.75 hrs clean-up.
+    Includes 2.0 hrs mobilisation + ${isRetrofit ? '1.25' : '0.75'} hrs clean-up.
     ${est.ctr.total > 0 ? `Countertop: supplier cost + ${form.ctrMarkup}% markup + ${est.ctr.labourHrs.toFixed(1)} hrs install.` : ''}
-    <em>Rates based on JLC trade data and North &amp; Brown install records.</em>
+    <em>Rates based on JLC trade data and field-calibrated install records.</em>
   `;
 
   // Installer notes
@@ -1669,19 +2151,93 @@ function renderWorkOrder(form, est, num, dateStr) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// PDF EXPORT
+// ════════════════════════════════════════════════════════════════════════════
+
+async function downloadPDF() {
+  const btn = document.getElementById('btn-download-pdf');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+
+  try {
+    const docId = currentDocView === 'customer' ? 'customer-doc' : 'workorder-doc';
+    const element = document.getElementById(docId);
+
+    // Temporarily widen for better PDF quality
+    const origMaxWidth = element.style.maxWidth;
+    element.style.maxWidth = '640px';
+    element.style.width = '640px';
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: currentDocView === 'customer' ? '#ffffff' : '#1a1a1a',
+      logging: false,
+    });
+
+    element.style.maxWidth = origMaxWidth;
+    element.style.width = '';
+
+    const { jsPDF } = window.jspdf;
+    const imgData = canvas.toDataURL('image/png');
+
+    // Calculate dimensions for letter-size PDF
+    const pdfWidth = 215.9; // Letter width in mm
+    const pdfHeight = 279.4; // Letter height in mm
+    const margin = 10;
+    const contentWidth = pdfWidth - (margin * 2);
+    const imgRatio = canvas.height / canvas.width;
+    const contentHeight = contentWidth * imgRatio;
+
+    const pdf = new jsPDF({
+      orientation: contentHeight > pdfHeight ? 'portrait' : 'portrait',
+      unit: 'mm',
+      format: 'letter',
+    });
+
+    // If content is taller than one page, scale to fit
+    if (contentHeight > pdfHeight - (margin * 2)) {
+      const fitHeight = pdfHeight - (margin * 2);
+      const fitWidth = fitHeight / imgRatio;
+      const xOffset = (pdfWidth - fitWidth) / 2;
+      pdf.addImage(imgData, 'PNG', xOffset, margin, fitWidth, fitHeight);
+    } else {
+      pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, contentHeight);
+    }
+
+    const clientName = currentForm?.clientName || 'Quote';
+    const safeClient = clientName.replace(/[^a-zA-Z0-9]/g, '_');
+    const docType = currentDocView === 'customer' ? 'Invoice' : 'WorkOrder';
+    pdf.save(`${safeClient}_${docType}_${invoiceNum}.pdf`);
+
+    showToast('PDF downloaded ✓');
+  } catch (err) {
+    console.error('PDF generation failed:', err);
+    showToast('PDF failed — use Print instead');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📥 Download PDF';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // VIEW MANAGEMENT
 // ════════════════════════════════════════════════════════════════════════════
 
 function showView(v) {
   document.getElementById('view-estimate').style.display = v === 'estimate' ? 'block' : 'none';
   document.getElementById('view-docs').style.display     = v === 'docs'     ? 'block' : 'none';
+  document.getElementById('view-history').style.display  = v === 'history'  ? 'block' : 'none';
   document.getElementById('tab-estimate').classList.toggle('active', v === 'estimate');
   document.getElementById('tab-docs').classList.toggle('active', v === 'docs');
+  document.getElementById('tab-history').classList.toggle('active', v === 'history');
   if (currentEstimate) document.getElementById('tab-docs').disabled = false;
+  if (v === 'history') renderHistory();
   window.scrollTo(0, 0);
 }
 
 function showDoc(d) {
+  currentDocView = d;
   document.getElementById('customer-doc').style.display  = d === 'customer'  ? 'block' : 'none';
   document.getElementById('workorder-doc').style.display = d === 'workorder' ? 'block' : 'none';
   document.getElementById('dt-customer').classList.toggle('active', d === 'customer');
